@@ -1,5 +1,6 @@
 const path = require('path');
-const config = require(path.normalize('./../config/config.js'));
+const config = require('./../config/config.js');
+const log = require('./../log/logger.js');
 const cluster = require('cluster');
 const os = require('os');
 const numWorkers = config.cluster.childprocess != null && config.cluster.childprocess > 0 ? config.cluster.childprocess : os.cpus().length;
@@ -11,23 +12,23 @@ const numWorkers = config.cluster.childprocess != null && config.cluster.childpr
  * @return {[type]}      [description]
  */
 module.exports.startCluster = function(work) {
-
   if (cluster.isMaster) {
+    log.info('starting cluster with ' + numWorkers + ' threads');
     // spawning child workers
     for (var i = 0; i < numWorkers; i++) {
       var worker = cluster.fork();
-      worker.on('message', () => {
-        console.log(message);
+      worker.on('message', (message) => {
+        log.debug(message);
       });
     }
 
     cluster.on('online', function(worker) {
-      console.log('Worker ' + worker.process.pid + ' is online');
+      log.info('Worker ' + worker.process.pid + ' is online');
     });
 
     cluster.on('exit', function(worker, code, signal) {
-      console.log('Worker ' + worker.process.pid + ' died with code: ' + code + ', and signal: ' + signal);
-      console.log('Starting a new worker');
+      log.error('Worker ' + worker.process.pid + ' died with code: ' + code + ', and signal: ' + signal);
+      log.error('Starting a new worker');
       cluster.fork();
     });
 
@@ -35,9 +36,10 @@ module.exports.startCluster = function(work) {
     work();
     process.on('message', (message, handle) => {
       if (message.type == 'shutdown' && message.from == 'master') {
+        log.debug('killing worker process');
         process.exit(0);
       } else {
-        console.log(message);
+        log.info(message);
       }
     });
   }
@@ -54,13 +56,13 @@ module.exports.restartWorkers = function restartWorkers() {
     workerIds.push(wid);
   }
   workerIds.forEach(function(wid) {
-    console.log('wid = ' + wid);
+    log.debug('wid = ' + wid);
     // sending message to workers from master
     cluster.workers[wid].send({
       type: 'shutdown',
       from: 'master'
     }, () => {
-      console.log('sending shutdown msg to master');
+      log.debug('sending shutdown msg to master');
     });
   });
 }

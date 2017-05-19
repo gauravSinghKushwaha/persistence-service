@@ -1,0 +1,23 @@
+{
+  "name": "node-rest-template",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "dependencies": {
+    "simple-node-logger": "^0.93.24"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gauravSinghKushwaha/nodeRestTemplate.git"
+  },
+  "author": "gaurav kushwaha <gkushwaha@gmail.com>",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/gauravSinghKushwaha/nodeRestTemplate/issues"
+  },
+  "homepage": "https://github.com/gauravSinghKushwaha/nodeRestTemplate#readme"
+}
