@@ -1,7 +1,25 @@
-const log = require('./../log/logger.js');
+const config = require('./../config/config');
+const log = require('./../log/logger');
+const router = require('./routes/authentication')
 const helmet = require('helmet');
-const compression = require('compression')
+const compression = require('compression');
+const bodyParser = require('body-parser');
 const express = require('express');
 const app = express();
+
 app.use(helmet());
-const router = express.Router();
+app.use(compression());
+app.use(bodyParser.urlencoded({
+  extended: true
+}));
+app.use(bodyParser.json());
+//http://localhost:9090/river/v1
+app.use('/river/' + config.web.version, router);
+
+const server = app.listen(config.web.port, function() {
+  var host = server.address().address;
+  var port = server.address().port;
+  log.info('server listening at http://' + host + ':' + port);
+});
+
+module.exports = server;
