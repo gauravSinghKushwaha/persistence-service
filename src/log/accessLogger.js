@@ -31,4 +31,8 @@ accessLogStream.on('warning', function(err) {
 //https://github.com/expressjs/morgan
 module.exports = morgan('combined', {
   stream: accessLogStream
+}, {
+  skip: function(req, res) {
+    return res.statusCode < -1; // will skip these entries in access logs
+  }
 });
