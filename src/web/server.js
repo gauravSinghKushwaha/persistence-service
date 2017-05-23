@@ -16,7 +16,6 @@ app.use(bodyParser.urlencoded({
 }));
 app.use(bodyParser.json());
 
-//http://localhost:9090/river/v1
 app.use('/river/' + config.web.version, router);
 
 const server = app.listen(config.web.port, function() {

@@ -8,3 +8,30 @@ A nodejs express based rest module. With following feature
 6) log level of application logs could be controlled from config. e.g warn,debug,info,error
 7) all the routes are mentioned in routes folder
 8) server running port could be changed from config along with api's versioning
+
+Usage :
+
+1)
+
+POST /river/v1/authenticate HTTP/1.1
+Host: localhost:9090
+Content-Type: application/json
+Authorization: Basic cml2ZXItZWphYjoxQDMkNV43KjkpLSs=
+Cache-Control: no-cache
+Postman-Token: c57caa30-c930-4e36-8e8b-21d2d88718b1
+
+{
+ "username": "User",
+ "password": "Password",
+ "domain": "river",
+ "resource": "Resource"
+}
+
+2)
+
+GET /river/v1/password HTTP/1.1
+Host: localhost:9090
+Content-Type: application/json
+Authorization: Basic cml2ZXItZWphYjoxQDMkNV43KjkpLSs=
+Cache-Control: no-cache
+Postman-Token: 1a0a293a-4ace-44f5-8d60-341aac1dbfa3
