@@ -1,7 +1,9 @@
-const express = require('express');
 const crypt = require('./../../common/encrypt');
-const router = express.Router();
 const log = require('./../../log/logger');
+const config = require('./../../config/config');
+const express = require('express');
+const auth = require('basic-auth')
+const router = express.Router();
 
 /**
  * Middleware woudl be used for authentication
@@ -11,7 +13,13 @@ const log = require('./../../log/logger');
  * @return {[type]}        [description]
  */
 router.use(function timeLog(req, res, next) {
-  log.debug('Time: ', Date.now());
+  var credentials = auth(req);
+  if (!credentials || credentials.name != config.apiauth.user || credentials.pass != config.apiauth.pwd) {
+    log.warn('access denied for credentials = ' + credentials.name + ' pwd = ' + credentials.pass);
+    res.status(401);
+    res.setHeader('WWW-Authenticate', 'Basic realm="Secure Area"');
+    return res.send('{success:Access denied}');
+  }
   next();
 });
 
@@ -19,14 +27,14 @@ router.route('/authenticate').post(function(req, res) {
   log.debug('request body = ' + JSON.stringify(req.body));
   const hash = crypt.hashText(req.body.username + ':' + req.body.password + ':' + req.body.domain + ':' + req.body.resource);
   if (hash == hash) {
-    res.status(200).send('{success:true}');
+    return res.status(200).send('{success:true}');
   } else {
-    res.status(401).send('{success:true}');
+    return res.status(401).send('{success:Access denied}');
   }
 });
 
 router.route('/password').get(function(req, res) {
-  res.status(200).send('{success:true}');
+  res.status(200).send('{password:password}');
 });
 
 /*

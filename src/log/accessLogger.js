@@ -28,7 +28,12 @@ accessLogStream.on('warning', function(err) {
   log.error('warning in access log = ' + err);
 });
 
-//https://github.com/expressjs/morgan
+/**
+ * Writing access logs to file
+ * //https://github.com/expressjs/morgan
+ * [exports description]
+ * @type {[type]}
+ */
 module.exports = morgan('combined', {
   stream: accessLogStream
 }, {
