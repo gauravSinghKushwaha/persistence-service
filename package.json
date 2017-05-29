@@ -10,6 +10,7 @@
     "express": "4.15.3",
     "helmet": "3.6.0",
     "morgan": "1.8.1",
+    "mysql": "2.13.0",
     "rotating-file-stream": "1.2.2",
     "simple-node-logger": "^0.93.24"
   },
