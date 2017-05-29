@@ -22,10 +22,10 @@ const poolCluster = function () {
     return poolCluster;
 };
 const cluster = poolCluster();
+const allSlaves = exports.READ + '*';
+const allMasters = exports.WRITE + '*';
 
 module.exports = {
-    allSlaves: exports.READ + '*',
-    allMasters: exports.WRITE + '*',
     readPool: cluster.of(this.allSlaves),
     writePool: cluster.of(this.allMasters),
     execute: function (mode, work) {
