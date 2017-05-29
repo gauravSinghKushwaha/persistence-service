@@ -1,5 +1,5 @@
-const config = require('./../config/config');
-const log = require('./../log/logger');
+const conf = require('./../config/config');
+const config = conf.config;const log = require('./../log/logger');
 const morgan = require('./../log/accessLogger');
 const router = require('./routes/authentication')
 const helmet = require('helmet');

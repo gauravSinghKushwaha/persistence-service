@@ -1,4 +1,5 @@
-const config = require('./../config/config');
+const conf = require('./../config/config');
+const config = conf.config;
 const log = require('./../log/logger');
 const fs = require('fs');
 const morgan = require('morgan');

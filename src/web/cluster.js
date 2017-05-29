@@ -1,8 +1,9 @@
 const path = require('path');
-const config = require('./../config/config');
+const conf = require('./../config/config');
 const log = require('./../log/logger');
 const cluster = require('cluster');
 const os = require('os');
+const config = conf.config;
 const numWorkers = config.cluster.childprocess != null && config.cluster.childprocess > 0 ? config.cluster.childprocess : os.cpus().length;
 
 /**

@@ -1,7 +1,8 @@
-const config = require('./../config/config');
+const conf = require('./../config/config');
 const log = require('./../log/logger');
 const crypto = require('crypto');
 
+const config = conf.config;
 const algorithm = config.encrypt.algorithm == null ? 'aes-256-ctr' : config.encrypt.algorithm;
 const privateKey = config.encrypt.key == null ? '1@3$5^7*9)-+' : config.encrypt.key;
 const hashAlgo = config.encrypt.hashalgo == null ? 'aes-256-ctr' : config.encrypt.hashalgo;
