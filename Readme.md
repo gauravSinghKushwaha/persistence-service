@@ -1,3 +1,6 @@
+Command :: nodemon .\src\web\index.js dev.properties db.properties
+
+
 A nodejs express based rest module. Which will be used a  generic resource server to store infomratio in DB.
 
 1) takes properties file as console input. you could give full path like d:\\abc\\xyz.properties Or only property file name like xyz.properties. In case of later it will look for file in resouces folder under config.
