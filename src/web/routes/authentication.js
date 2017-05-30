@@ -2,6 +2,7 @@ const crypt = require('./../../common/encrypt');
 const log = require('./../../log/logger');
 const conf = require('./../../config/config');
 const con = require('./../../db/connection');
+const jsonValidator = require('./../../common/jsonInputValidation');
 const express = require('express');
 const auth = require('basic-auth');
 const router = express.Router();
@@ -25,12 +26,14 @@ router.use(function timeLog(req, res, next) {
 });
 
 router.route('/authenticate').post(function (req, res) {
+    console.log(jsonValidator(req.body));
+
     con.execute(con.READ, function (err, connection) {
             if (err) {
                 log.error(err);
                 throw err;
             }
-            connection.query('SELECT * from river.user', function (error, results, fields) {
+            connection.query('SELECT * from river.user where river.user.user_id = ?', [1] , function (error, results, fields) {
                 connection.release();
                 if (error) {
                     log.error(error);

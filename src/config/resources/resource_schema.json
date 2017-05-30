@@ -1,0 +1,91 @@
+{  
+   "description":"Resource object",
+   "type":"object",
+   "properties":{  
+      "schema":{  
+         "type":"string",
+         "description":"DB schema to be used",
+        "required":true
+      },
+      "table":{  
+         "type":"string",
+        "required":true,
+        "description":"DB table to be used"
+      },
+      "cached":{  
+         "type":"boolean",
+         "optional":"true",
+         "description":"flag if resource to be cached"
+      },
+      "cacheexpiry":{  
+         "type":"integer",
+         "optional":"1121212",
+         "description":"cache expiry in miliseconds"
+      },
+      "connection":{  
+         "type":"object",
+         "description":"DB Connection",
+         "properties":{  
+            "readconn":{  
+               "type":"string"
+            },
+            "writeconn":{  
+               "type":"string"
+            }
+         }
+      },
+      "encryalgo":{  
+         "type":"string",
+         "description":"encryption algo"
+      },
+      "encrykey":{  
+         "type":"string",
+         "description":"encryption key"
+      },
+      "hashalgo":{  
+         "type":"string",
+         "description":"hashing algo"
+      },
+      "salt":{  
+         "type":"string",
+         "description":"salt for hash"
+      },
+      "attr":{  
+         "type":"array",
+         "required":true,
+         "description":"resource attributes array",
+         "items":{  
+            "type":"object",
+            "properties":{  
+               "name":{  
+                  "type":"string",
+                  "description":"column name",
+                  "required":true
+               },
+               "value":{  
+                  "type":"string",
+                  "description":"column value",
+                  "required":true
+               },
+               "vartype":{  
+                  "type":"string",
+                  "description":"coulmn type",
+                  "required":true
+               },
+               "isPrimaryKey":{  
+                  "type":"boolean",
+                  "description":"is primary key"
+               },
+               "hashed":{  
+                  "description":"if value to be hashed before persistence",
+                  "type":"boolean"
+               },
+               "encrypted":{  
+                  "description":"if value to be encrypted before persistence",
+                  "type":"boolean"
+               }
+            }
+         }
+      }
+   }
+}

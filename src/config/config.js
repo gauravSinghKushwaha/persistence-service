@@ -1,21 +1,12 @@
-const path = require('path');
-const fs = require('fs');
-
-const UTF_8 = "utf8"
-const RES = '/resources';
-
-function readConfig(configFile) {
-  console.log(' configFile arg = ' + configFile);
-  if (configFile != null && !path.isAbsolute(configFile)) {
-    configFile = path.resolve(__dirname + RES, configFile);
-  } else {
-    throw (new Error('could not readd properties file ' + configFile));
-  }
-  console.log(' reading config from = ' + configFile);
-  return JSON.parse(fs.readFileSync(configFile, UTF_8));
-}
+const fileReader = require('./../common/filereader');
+const DEF_RES_PATH = './../config/resources/resource_schema.json';
+const DEF_PROP_PATH = './../config/properties';
+const DEF_PROP = 'dev.properties';
+const DEF_DB_PROP = 'db.properties';
 
 module.exports = {
-  config: readConfig(process.argv[2]),
-  dbconfig: readConfig(process.argv[3])
-};
+    config: fileReader.readFile(process.argv[2] == null ? DEF_PROP : process.argv[2], DEF_PROP_PATH),
+    dbconfig: fileReader.readFile(process.argv[3] == null ? DEF_DB_PROP : process.argv[3], DEF_PROP_PATH),
+    resourceSchema: fileReader.readDir(process.argv[4], DEF_RES_PATH)
+}
+
