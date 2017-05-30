@@ -26,14 +26,19 @@ router.use(function timeLog(req, res, next) {
 });
 
 router.route('/authenticate').post(function (req, res) {
-    console.log(jsonValidator(req.body));
-
+    try {
+        console.log(jsonValidator(req.body));
+    } catch (err) {
+        log.error(err);
+        res.status(400);
+        return res.send('bad request ::: ' + err);
+    }
     con.execute(con.READ, function (err, connection) {
             if (err) {
                 log.error(err);
                 throw err;
             }
-            connection.query('SELECT * from river.user where river.user.user_id = ?', [1] , function (error, results, fields) {
+            connection.query('SELECT * from river.user where river.user.user_id = ?', [1], function (error, results, fields) {
                 connection.release();
                 if (error) {
                     log.error(error);

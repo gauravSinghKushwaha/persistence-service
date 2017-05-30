@@ -4,22 +4,12 @@ var Validator = require('jsonschema').Validator;
 var v = new Validator();
 
 module.exports = function (jsonData) {
-    log.debug('json-data = ' + jsonData + ' schema = ' + conf.resourceSchema);
-
-    var result = v.validate(jsonData, conf.resourceSchema);
-    console.log(result);
-    if (result.ok) {
-        log.debug('json validation successfull for jsonData = ' + jsonData + ' schema = ' + conf.resourceSchema);
-        return true;
+    const schema = conf.resourceSchema.get(jsonData.table);
+    log.debug('jsonData = ' + JSON.stringify(jsonData) + '\n schema = ' + JSON.stringify(schema));
+    var result = v.validate(jsonData, schema);
+    if (result.errors != null && result.errors.length > 0) {
+        log.error("JSON validation failed for errors: " + result.errors.join(", "));
+        throw new Error('Json validation failed. JSON SCHEMA = '+JSON.stringify(schema));
     }
-    else {
-        console.log("JSON has the following errors: " + result.errors.join(", ") + " at path " + result.path);
-        log.info("JSON has the following errors: " + result.errors.join(", ") + " at path " + result.path);
-    }
-    /*
-     if (!valid) {
-     }
-     log.debug('json validation successfull for jsonData = ' + jsonData + ' with errors = ' + jsonValidator.errors + ' schema = ' + conf.resourceSchema);
-     return true;
-     */
+    return true;
 }

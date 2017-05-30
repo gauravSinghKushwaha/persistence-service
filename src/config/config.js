@@ -1,5 +1,5 @@
 const fileReader = require('./../common/filereader');
-const DEF_RES_PATH = './../config/resources/resource_schema.json';
+const DEF_RES_PATH = './../config/resources';
 const DEF_PROP_PATH = './../config/properties';
 const DEF_PROP = 'dev.properties';
 const DEF_DB_PROP = 'db.properties';

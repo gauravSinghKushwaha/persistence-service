@@ -1,5 +1,6 @@
 const path = require('path');
 const fs = require('fs');
+const HashMap = require('hashmap');
 const UTF_8 = "utf8";
 
 function getDirPath(dir, defDirPath) {
@@ -34,16 +35,32 @@ module.exports.readFile = function readFile(path, defFilePath) {
 }
 
 /**
- * Reads json file from configFile and return object
+ * Reads all the json files from directory, and put it in map with filename (without extension) being key
  * @param configFile
  */
-module.exports.readDir = function readDir(path, defDirPath) {
-    const dir = getDirPath(path, defDirPath);
-    console.log(' reading config from = ' + dir);
-    if (fs.existsSync(dir)) {
-        fs.readFileSync(dir, UTF_8);
-        return JSON.parse(fs.readFileSync(dir));
-    } else {
-        throw new Error('dir ' + dir + ' does not exists');
+module.exports.readDir = function readDir(dirPath, defDirPath) {
+    const map = new HashMap();
+    const dir = getDirPath(dirPath, defDirPath);
+    console.log('reading resources from config DIR = ' + dir);
+    fs.readdir(dir, UTF_8, function (err, files) {
+        onError(err);
+        files.forEach(function (file) {
+            try {
+                const filePath = path.resolve(dir, file);
+                console.log('filePath = ' + filePath);
+                map.set(file.substr(file, file.length - '.json'.length), JSON.parse(fs.readFileSync(filePath, UTF_8)));
+            } catch (err) {
+                console.log('error reading = ' + err);
+            }
+        });
+    });
+
+    function onError(err) {
+        if (err) {
+            console.error(' error reading config from ' + err);
+            throw err;
+        }
     }
+
+    return map;
 }

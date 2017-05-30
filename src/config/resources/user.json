@@ -7,7 +7,7 @@
          "description":"DB schema to be used",
         "required":true
       },
-      "table":{  
+      "table":{
          "type":"string",
         "required":true,
         "description":"DB table to be used"
