@@ -22,34 +22,6 @@
          "optional":"1121212",
          "description":"cache expiry in miliseconds"
       },
-      "connection":{  
-         "type":"object",
-         "description":"DB Connection",
-         "properties":{  
-            "readconn":{  
-               "type":"string"
-            },
-            "writeconn":{  
-               "type":"string"
-            }
-         }
-      },
-      "encryalgo":{  
-         "type":"string",
-         "description":"encryption algo"
-      },
-      "encrykey":{  
-         "type":"string",
-         "description":"encryption key"
-      },
-      "hashalgo":{  
-         "type":"string",
-         "description":"hashing algo"
-      },
-      "salt":{  
-         "type":"string",
-         "description":"salt for hash"
-      },
       "attr":{  
          "type":"array",
          "required":true,
