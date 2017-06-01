@@ -11,13 +11,10 @@ const privateKey = config.encrypt.key == null ? '1@3$5^7*9)-+' : config.encrypt.
 const hashAlgo = config.encrypt.hashalgo == null ? 'aes-256-ctr' : config.encrypt.hashalgo;
 const salt = config.encrypt.salt == null ? '1@3$5^7*9)-+' : config.encrypt.salt;
 
-const cipher = crypto.createCipher(algorithm, privateKey);
-const decipher = crypto.createDecipher(algorithm, privateKey);
-
 log.debug('algorithm=' + algorithm + ' privateKey=' + privateKey + ' hashAlgo=' + hashAlgo + ' salt=' + salt);
 
 function decrypt(text) {
-    var decipher = crypto.createDecipher(algorithm, privateKey);
+    const decipher = crypto.createDecipher(algorithm, privateKey);
     var dec = decipher.update(text, HEX, UTF8);
     dec += decipher.final(UTF8);
     log.debug('text = ' + text + ' decrypt = ' + decrypt);
@@ -25,7 +22,7 @@ function decrypt(text) {
 }
 
 function encrypt(text) {
-    var cipher = crypto.createCipher(algorithm, privateKey);
+    const cipher = crypto.createCipher(algorithm, privateKey);
     var crypted = cipher.update(text, UTF8, HEX);
     crypted += cipher.final(HEX);
     log.debug('text = ' + text + ' crypted = ' + crypted);
@@ -39,29 +36,26 @@ module.exports = {
         return hash;
     },
     /**
-     * Encrypt text, could be decryptex by decryptWithUserPwd
+     * Encrypt text, could be decrypted by decrypt
      * @param  {[type]} plainText [description]
-     * @param  {[type]} userPwd        [description]
      * @return {[type]}           [description]
      */
-    ecryptWithUserPwd: function ecryptWithUserPwd(plainText, userPwd) {
-        var encryptedText = encrypt(plainText, userPwd);
-        var hash = hashText(encryptedText);
+    encryptText: function ecrypt(plainText) {
+        var encryptedText = encrypt(plainText);
+        var hash = this.hashText(encryptedText);
         return encryptedText + "$" + hash;
     },
     /**
-     * decrypt text ecnrypted via ecryptWithUserPwd
-     * @param  {[type]} encryptedAndAuthenticatedText [description]
-     * @param  {[type]} userPwd                            [description]
+     * decrypt text ecnrypted via ecrypt
      * @return {[type]}                               [description]
      */
-    decryptWithUserPwd: function decryptWithUserPwd(encryptedText, userPwd) {
+    decryptText: function decrypt(encryptedText) {
         var encryptedAndHashArray = encryptedText.split("$");
         var encrypted = encryptedAndHashArray[0];
         var hash = encryptedAndHashArray[1];
-        var hash2Compare = hashText(encrypted);
+        var hash2Compare = this.hashText(encrypted);
         if (hash === hash2Compare) {
-            return decrypt(encrypted, userPwd);
+            return decrypt(encrypted);
         }
     }
 };
