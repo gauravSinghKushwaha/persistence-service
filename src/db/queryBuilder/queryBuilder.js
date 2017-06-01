@@ -50,7 +50,7 @@ query.prototype.createConditionsAndValues = function () {
             }
         }
     });
-    return {"conditions": conditions, "values": values}
+    return {"conditions": conditions, "values": values};
 }
 /**
  * Creates insert query

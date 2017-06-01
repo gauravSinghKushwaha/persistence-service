@@ -8,7 +8,7 @@ const config = conf.config;
 
 const algorithm = config.encrypt.algorithm == null ? 'aes-256-ctr' : config.encrypt.algorithm;
 const privateKey = config.encrypt.key == null ? '1@3$5^7*9)-+' : config.encrypt.key;
-const hashAlgo = config.encrypt.hashalgo == null ? 'aes-256-ctr' : config.encrypt.hashalgo;
+const hashAlgo = config.encrypt.hashalgo == null ? 'sha256' : config.encrypt.hashalgo;
 const salt = config.encrypt.salt == null ? '1@3$5^7*9)-+' : config.encrypt.salt;
 
 log.debug('algorithm=' + algorithm + ' privateKey=' + privateKey + ' hashAlgo=' + hashAlgo + ' salt=' + salt);
@@ -30,7 +30,7 @@ function encrypt(text) {
 }
 
 module.exports = {
-    hashText: function hashText(text) {
+    hashText: function (text) {
         var hash = crypto.createHash(hashAlgo).update(salt + text + salt).digest(HEX);
         log.debug('text = ' + text + ' salt = ' + salt + ' hash = ' + hash);
         return hash;
@@ -40,7 +40,7 @@ module.exports = {
      * @param  {[type]} plainText [description]
      * @return {[type]}           [description]
      */
-    encryptText: function ecrypt(plainText) {
+    encryptText: function (plainText) {
         var encryptedText = encrypt(plainText);
         var hash = this.hashText(encryptedText);
         return encryptedText + "$" + hash;
@@ -49,7 +49,7 @@ module.exports = {
      * decrypt text ecnrypted via ecrypt
      * @return {[type]}                               [description]
      */
-    decryptText: function decrypt(encryptedText) {
+    decryptText: function (encryptedText) {
         var encryptedAndHashArray = encryptedText.split("$");
         var encrypted = encryptedAndHashArray[0];
         var hash = encryptedAndHashArray[1];
