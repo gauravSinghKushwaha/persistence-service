@@ -3,6 +3,7 @@ const log = require('./../../log/logger');
 const conf = require('./../../config/config');
 const con = require('./../../db/connection');
 const jsonValidator = require('./../../common/jsonInputValidation');
+const QueryBuilder = require('./../../db/queryBuilder/queryBuilder');
 const express = require('express');
 const auth = require('basic-auth');
 const router = express.Router();
@@ -27,12 +28,16 @@ router.use(function timeLog(req, res, next) {
 
 router.route('/authenticate').post(function (req, res) {
     try {
-        console.log(jsonValidator(req.body));
+        const resSchema = jsonValidator(req.body);
+        q = new QueryBuilder(req, res, resSchema);
+        q.createInsertQuery();
     } catch (err) {
         log.error(err);
         res.status(400);
-        return res.send('bad request ::: ' + err);
+        return res.send('bad req :: ' + err);
     }
+
+
     con.execute(con.READ, function (err, connection) {
             if (err) {
                 log.error(err);
@@ -49,8 +54,8 @@ router.route('/authenticate').post(function (req, res) {
         }
     );
 
-    log.debug('request body = ' + JSON.stringify(req.body));
-    const hash = crypt.hashText(req.body.username + ':' + req.body.password + ':' + req.body.domain + ':' + req.body.resource);
+    log.debug('req body = ' + JSON.stringify(req.body));
+    const hash = crypt.hashText(req.body.name + ':' + req.body.password + ':' + req.body.domain + ':' + req.body.resource);
     if (hash == hash) {
         return res.status(200).send('{success:true}');
     } else {

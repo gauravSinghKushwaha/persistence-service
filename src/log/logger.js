@@ -10,10 +10,14 @@ const logFileName = config.logs.filename == null ? 'river-<DATE>.log' : config.l
 fs.existsSync(logDir) || fs.mkdirSync(logDir);
 
 const opts = {
-  //errorEventName: 'error',
-  logDirectory: logDir,
-  fileNamePattern: logFileName,
-  dateFormat: 'YYYY.MM.DD-HH'
+    //errorEventName: 'error',
+    logDirectory: logDir,
+    fileNamePattern: logFileName,
+    dateFormat: 'YYYY.MM.DD-HH',
+    size: '10M', // rotate every 10 MegaBytes written
+    interval: '1d', // rotate daily
+    compress: 'gzip' // compress rotated files
+
 };
 const log = logger.createRollingFileLogger(opts);
 log.setLevel(config.logs.level);

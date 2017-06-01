@@ -25,7 +25,7 @@ function getFilePath(file, defFilePath) {
  */
 module.exports.readFile = function readFile(path, defFilePath) {
     const file = getFilePath(path, defFilePath);
-    console.log(' reading config from = ' + file);
+    console.log('reading config from = ' + file);
     if (fs.existsSync(file)) {
         fs.readFileSync(file, UTF_8);
         return JSON.parse(fs.readFileSync(file));
