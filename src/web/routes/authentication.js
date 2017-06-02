@@ -42,7 +42,7 @@ router.route('/resources').post(function (req, res) {
             res.status(500);
             return res.send('error getting connection =' + err.toString());
         }
-        queryBuilder = new QueryBuilder(req, res, jsonValidator.getSchema(req.body));
+        queryBuilder = new QueryBuilder(req, jsonValidator.getSchema(req.body));
         query = queryBuilder.createInsertQuery();
         connection.query(query.query, query.values, function (error, results, fields) {
             connection.release();
