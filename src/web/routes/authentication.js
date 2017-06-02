@@ -17,49 +17,83 @@ const config = conf.config;
  * @return {[type]}        [description]
  */
 router.use(function timeLog(req, res, next) {
+    /*API consumer's credentials matching*/
     var credentials = auth(req);
     if (!credentials || credentials.name != config.apiauth.user || credentials.pass != config.apiauth.pwd) {
         log.warn('access denied for credentials = ' + credentials.name + ' pwd = ' + credentials.pass);
         res.status(401);
         res.setHeader('WWW-Authenticate', 'Basic realm="Secure Area"');
-        return res.send('{success:Access denied}');
+        return res.send('{"success" : "Access denied"}');
+    }
+    /*Validating requesy payload against json schema*/
+    try {
+        jsonValidator.validate(req.body);
+    } catch (err) {
+        return res.status(400).send(('{"error" : "' + err.toString() + '"}'));
     }
     next();
 });
 
 router.route('/resources').post(function (req, res) {
-
-    try {
-        jsonValidator.validate(req.body);
-    } catch (err) {
-        res.status(400);
-        return res.send(err.toString());
-    }
-
     con.execute(con.WRITE, function (err, connection) {
         if (err) {
             log.error(err);
-            res.status(500);
-            return res.send('error getting connection =' + err.toString());
+            return res.status(500).send(('{"error" : "' + err.toString() + '"}'));
         }
         queryBuilder = new QueryBuilder(req, jsonValidator.getSchema(req.body));
         query = queryBuilder.createInsertQuery();
-        connection.query(query.query, query.values, function (error, results, fields) {
+        connection.query(query.query, query.values, function (err, results, fields) {
             connection.release();
-            if (error) {
-                log.error(error);
-                res.status(400);
-                return res.send(error.toString());
+            if (err) {
+                log.error(err);
+                return res.status(500).send(('{"error" : "' + err.toString() + '"}'));
             }
-            log.debug('results = ' + results + '\nfields = ' + fields);
-            res.status(201);
-            return res.send(JSON.stringify(results.insertId));
+            log.debug('results = ' + JSON.stringify(results) + '\t\tfields = ' + JSON.stringify(fields));
+            return res.status(201).send(('{"id" : "' + results.insertId + '"}'));
         });
     });
 });
 
-router.route('/password').get(function (req, res) {
-    res.status(200).send('{password:password}');
+router.route('/resources/:id').put(function (req, res) {
+    con.execute(con.WRITE, function (err, connection) {
+        if (err) {
+            log.error(err);
+            return res.status(500).send(('{"error" : "' + err.toString() + '"}'));
+        }
+        queryBuilder = new QueryBuilder(req, jsonValidator.getSchema(req.body));
+        query = queryBuilder.updateQuery();
+        connection.query(query.query, query.values, function (err, results, fields) {
+            connection.release();
+            if (err) {
+                log.error(err);
+                return res.status(500).send(('{"error" : "' + err.toString() + '"}'));
+            }
+            log.debug('results = ' + JSON.stringify(results) + '\t\tfields = ' + JSON.stringify(fields));
+            res.status(201);
+            return res.status(201).send('{"rows" : "' + results.affectedRows + '"}');
+        });
+    });
+});
+
+router.route('/resources').get(function (req, res) {
+    con.execute(con.READ, function (err, connection) {
+        if (err) {
+            log.error(err);
+            return res.status(500).send(('{"error" : "' + err.toString() + '"}'));
+        }
+        queryBuilder = new QueryBuilder(req, jsonValidator.getSchema(req.body));
+        query = queryBuilder.createInsertQuery();
+        connection.query(query.query, query.values, function (err, results, fields) {
+            connection.release();
+            if (err) {
+                log.error(err);
+                return res.status(500).send(('{"error" : "' + err.toString() + '"}'));
+            }
+            log.debug('results = ' + results + '\t\tfields = ' + fields);
+            res.status(200);
+            return res.status(200).send('{"rows" : "' + results.affectedRows + '"}');
+        });
+    });
 });
 
 module.exports = router;
