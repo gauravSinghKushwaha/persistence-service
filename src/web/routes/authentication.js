@@ -26,7 +26,8 @@ router.use(function timeLog(req, res, next) {
     next();
 });
 
-router.route('/authenticate').post(function (req, res) {
+router.route('/resources').post(function (req, res) {
+
     try {
         jsonValidator.validate(req.body);
     } catch (err) {
@@ -34,32 +35,32 @@ router.route('/authenticate').post(function (req, res) {
         return res.send(err.toString());
     }
 
-    q = new QueryBuilder(req, res, jsonValidator.getSchema(req.body));
-    query = q.createInsertQuery();
-    con.execute(con.READ, function (err, connection) {
-            if (err) {
-                log.error(err);
-                throw err;
-            }
-            console.log(query);
+    con.execute(con.WRITE, function (err, connection) {
+        if (err) {
+            log.error(err);
+            res.status(500);
+            return res.send('error getting connection =' + err.toString());
+        }
+        queryBuilder = new QueryBuilder(req, res, jsonValidator.getSchema(req.body));
+        query = queryBuilder.createInsertQuery();
+        try {
             connection.query(query.query, query.values, function (error, results, fields) {
                 connection.release();
                 if (error) {
                     log.error(error);
-                    throw error;
+                    res.status(400);
+                    return res.send(error.toString());
                 }
-                log.debug(results);
+                log.debug('results = ' + results + '\nfields = ' + fields);
+                res.status(201);
+                return res.send(JSON.stringify(results.insertId));
             });
+        } catch (err) {
+            log.error('error executing query = ' + err);
+            res.status(500);
+            return res.send('error getting connection =' + err.toString());
         }
-    );
-
-    log.debug('req body = ' + JSON.stringify(req.body));
-    const hash = crypt.hashText(req.body.name + ':' + req.body.password + ':' + req.body.domain + ':' + req.body.resource);
-    if (hash == hash) {
-        return res.status(200).send('{success:true}');
-    } else {
-        return res.status(401).send('{success:Access denied}');
-    }
+    });
 });
 
 router.route('/password').get(function (req, res) {

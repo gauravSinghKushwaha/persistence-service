@@ -25,7 +25,7 @@ Cache-Control: no-cache
 Postman-Token: 788275fc-a7bc-0ebb-b285-53c9d8845f55
 
 {
-  "schema":"saravs",
+  "schema":"river",
   "table":"user",
   "cached":true,
   "attr":{
@@ -39,9 +39,9 @@ Postman-Token: 788275fc-a7bc-0ebb-b285-53c9d8845f55
     "status":"active",
     "domain":"river.com",
     "resource":"android",
-    "created_on":"dfdfd",
+    "created_on":"2012-04-21T18:25:43-05:00",
     "created_by":1,
-    "update_on":"ssfdf",
+    "update_on":"2015-09-22T10:30:06.000Z",
     "updated_by":1
   },
   "conf":{
