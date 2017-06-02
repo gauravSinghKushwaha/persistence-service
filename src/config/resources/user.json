@@ -188,13 +188,10 @@
       },
       "dependencies": {
         "update_on": [
-          "created_on",
-          "created_by"
+          "created_on"
         ],
         "update_by": [
-          "created_on",
-          "created_by",
-          "update_on"
+          "created_by"
         ]
       }
     },
