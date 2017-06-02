@@ -28,22 +28,21 @@ router.use(function timeLog(req, res, next) {
 
 router.route('/authenticate').post(function (req, res) {
     try {
-        const resSchema = jsonValidator(req.body);
-        q = new QueryBuilder(req, res, resSchema);
-        q.createInsertQuery();
+        jsonValidator.validate(req.body);
     } catch (err) {
-        log.error(err);
         res.status(400);
-        return res.send('bad req :: ' + err);
+        return res.send(err.toString());
     }
 
-
+    q = new QueryBuilder(req, res, jsonValidator.getSchema(req.body));
+    query = q.createInsertQuery();
     con.execute(con.READ, function (err, connection) {
             if (err) {
                 log.error(err);
                 throw err;
             }
-            connection.query('SELECT * from river.user where river.user.user_id = ?', [1], function (error, results, fields) {
+            console.log(query);
+            connection.query(query.query, query.values, function (error, results, fields) {
                 connection.release();
                 if (error) {
                     log.error(error);

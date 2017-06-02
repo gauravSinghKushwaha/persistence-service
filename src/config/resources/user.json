@@ -145,6 +145,7 @@
         },
         "created_on": {
           "type": "string",
+          "format": "date-time",
           "disallow": [
             "boolean",
             "integer"
@@ -165,6 +166,7 @@
         },
         "update_on": {
           "type": "string",
+          "format": "date-time",
           "disallow": [
             "boolean",
             "integer"
