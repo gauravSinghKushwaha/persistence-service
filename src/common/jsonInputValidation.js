@@ -21,7 +21,6 @@ module.exports =
                 log.error(errMsg);
                 throw new Error(errMsg);
             }
-            console.log('success');
             return true;
         }
         ,

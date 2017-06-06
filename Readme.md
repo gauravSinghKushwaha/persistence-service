@@ -87,9 +87,53 @@ Postman-Token: 7b608aad-6972-1f01-3abd-810385f3822e
   }
 }
 
-GET /river/v1/password HTTP/1.1
+3) SEARCH
+
+POST /river/v1/search HTTP/1.1
 Host: localhost:9090
 Content-Type: application/json
 Authorization: Basic cml2ZXItZWphYjoxQDMkNV43KjkpLSs=
 Cache-Control: no-cache
-Postman-Token: 1a0a293a-4ace-44f5-8d60-341aac1dbfa3
+Postman-Token: d8539cc8-ef1f-8038-1500-3e96e5960277
+
+{
+  "schema":"river",
+  "table":"user",
+  "operation":"search",
+  "fields":[
+  	"id",
+    "user_id",
+    "name",
+    "password",
+    "phonenumber",
+    "email",
+    "age",
+    "status",
+    "domain",
+    "resource",
+    "created_on",
+    "created_by",
+    "update_on",
+    "updated_by"
+  ],
+  "where":{
+      "age":18,
+      "status":"active",
+      "domain":"river.com",
+      "password":"ad7878addf",
+      "phonenumber":9999999999,
+      "email":"abc@xyz.com"
+  },
+  "orderby":{
+    "order":[
+      "status",
+      "phonenumber",
+      "email",
+      "created_on",
+      "update_on"
+    ],
+    "by":"asc"
+  },
+  "offset":20,
+  "limit":200
+}
