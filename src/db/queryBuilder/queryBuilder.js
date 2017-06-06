@@ -5,15 +5,16 @@ const crypt = require('./../../common/encrypt');
 const DOT = ".";
 const SPACE = " ";
 
-function query(req, schema) {
+function query(req, resourceSchema, operationSchema) {
     this.req = req;
-    this.schema = schema;
     this.body = req.body;
     this.dbTable = this.body.table;
     this.dbSchema = this.body.schema;
     this.cols = this.body.attr;
-    this.schemaCols = this.schema.properties.attr.properties;
-    this.conf = this.schema.properties.conf;
+    this.resourceSchema = resourceSchema;
+    this.schemaCols = this.resourceSchema.properties.attr.properties;
+    this.conf = this.resourceSchema.properties.conf;
+    this.operationSchema = operationSchema;
 }
 /**
  * Based on column mentioned in body and schema, method creates conditions and values array for help building query
@@ -87,6 +88,39 @@ query.prototype.updateQuery = function () {
     q.values.push(this.req.params.id);
     return {"query": queryStr, "values": q.values};
 }
+
+/**
+ * Creates get query
+ * @returns {{where: string, values: Array}}
+ */
+query.prototype.findByIDQuery = function () {
+    const jsonData = this.req.body;
+    const fields = jsonData.fields;
+    const where = jsonData.where;
+    const orderby = jsonData.orderby;
+    const limit = jsonData.limit;
+    const conf = this.conf;
+    const schemaCols = this.schemaCols;
+    const values = [];
+
+    console.log('fields = ' + JSON.stringify(fields) + '\nwhere= ' + JSON.stringify(where) + '\norderby = '
+        + JSON.stringify(orderby) + '\nlimit = ' + JSON.stringify(limit) + '\nschemaCols = ' + JSON.stringify(schemaCols));
+
+    var queryStr = 'SELECT ' + SPACE + fields.join(',') + SPACE + 'FROM' + SPACE + this.dbSchema + DOT + this.dbTable + SPACE + 'WHERE' + SPACE;
+    const keys = Object.keys(where);
+    queryStr = queryStr + keys.join(' = ? AND ') + ' = ? ';
+    keys.forEach(function (k) {
+        values.push(where[k]);
+    });
+
+    if (orderby) {
+        queryStr = queryStr + SPACE + 'ORDER BY' + SPACE + orderby.order.join(',') + SPACE + (orderby.by != null && orderby.by != undefined ? orderby.by : 'ASC');
+    }
+    queryStr = queryStr + SPACE + 'LIMIT' + SPACE + (  limit ? limit : 10);
+
+    return {"query": queryStr, "values": values};
+}
+
 /**
  * Checks obj presence in array
  * @param arr

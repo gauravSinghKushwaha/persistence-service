@@ -215,7 +215,48 @@
       ],
       "autodates": [
         "created_on"
-      ]
+      ],
+      "searchconf": {
+        "fields": [
+          "id",
+          "user_id",
+          "name",
+          "password",
+          "phonenumber",
+          "email",
+          "age",
+          "status",
+          "domain",
+          "resource",
+          "created_on",
+          "created_by",
+          "update_on",
+          "updated_by"
+        ],
+        "where": [
+          "id",
+          "user_id",
+          "name",
+          "phonenumber",
+          "email",
+          "created_on",
+          "updated_on"
+        ],
+        "orderby": {
+          "cols": [
+            "status",
+            "phonenumber",
+            "email",
+            "created_on",
+            "updated_on"
+          ],
+          "order": [
+            "asc",
+            "desc"
+          ]
+        },
+        "resultlimit": "200"
+      }
     }
   }
 }

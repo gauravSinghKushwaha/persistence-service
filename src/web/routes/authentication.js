@@ -25,7 +25,8 @@ router.use(function timeLog(req, res, next) {
         res.setHeader('WWW-Authenticate', 'Basic realm="Secure Area"');
         return res.send('{"success" : "Access denied"}');
     }
-    /*Validating requesy payload against json schema*/
+
+    /*Validating request payload against json schema*/
     try {
         jsonValidator.validate(req.body);
     } catch (err) {
@@ -34,13 +35,14 @@ router.use(function timeLog(req, res, next) {
     next();
 });
 
+/*CREATE*/
 router.route('/resources').post(function (req, res) {
     con.execute(con.WRITE, function (err, connection) {
         if (err) {
             log.error(err);
             return res.status(500).send(('{"error" : "' + err.toString() + '"}'));
         }
-        queryBuilder = new QueryBuilder(req, jsonValidator.getSchema(req.body));
+        queryBuilder = new QueryBuilder(req, jsonValidator.getResourceSchema(req.body.table));
         query = queryBuilder.createInsertQuery();
         connection.query(query.query, query.values, function (err, results, fields) {
             connection.release();
@@ -54,13 +56,14 @@ router.route('/resources').post(function (req, res) {
     });
 });
 
+/*UPDATE*/
 router.route('/resources/:id').put(function (req, res) {
     con.execute(con.WRITE, function (err, connection) {
         if (err) {
             log.error(err);
             return res.status(500).send(('{"error" : "' + err.toString() + '"}'));
         }
-        queryBuilder = new QueryBuilder(req, jsonValidator.getSchema(req.body));
+        queryBuilder = new QueryBuilder(req, jsonValidator.getResourceSchema(req.body.table));
         query = queryBuilder.updateQuery();
         connection.query(query.query, query.values, function (err, results, fields) {
             connection.release();
@@ -69,29 +72,31 @@ router.route('/resources/:id').put(function (req, res) {
                 return res.status(500).send(('{"error" : "' + err.toString() + '"}'));
             }
             log.debug('results = ' + JSON.stringify(results) + '\t\tfields = ' + JSON.stringify(fields));
-            res.status(201);
-            return res.status(201).send('{"rows" : "' + results.affectedRows + '"}');
+            return res.status(200).send('{"rows" : "' + results.affectedRows + '"}');
         });
     });
 });
 
-router.route('/resources').get(function (req, res) {
+/*GET*/
+router.route('/search').post(function (req, res) {
     con.execute(con.READ, function (err, connection) {
         if (err) {
             log.error(err);
             return res.status(500).send(('{"error" : "' + err.toString() + '"}'));
         }
-        queryBuilder = new QueryBuilder(req, jsonValidator.getSchema(req.body));
-        query = queryBuilder.createInsertQuery();
+        queryBuilder = new QueryBuilder(req, jsonValidator.getResourceSchema(req.body.table),jsonValidator.getOperationSchema(req.body.operation));
+        query = queryBuilder.findByIDQuery();
+        console.log(query);
         connection.query(query.query, query.values, function (err, results, fields) {
             connection.release();
             if (err) {
                 log.error(err);
                 return res.status(500).send(('{"error" : "' + err.toString() + '"}'));
             }
-            log.debug('results = ' + results + '\t\tfields = ' + fields);
+            console.log(results);
+            console.log('results = ' + results + '\t\tfields = ' + fields);
             res.status(200);
-            return res.status(200).send('{"rows" : "' + results.affectedRows + '"}');
+            return res.status(200).send(fields);
         });
     });
 });
