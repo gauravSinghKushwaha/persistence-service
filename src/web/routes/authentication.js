@@ -96,7 +96,7 @@ router.route('/search').post(function (req, res) {
             console.log(results);
             console.log('results = ' + results + '\t\tfields = ' + fields);
             res.status(200);
-            return res.status(200).send(fields);
+            return res.status(200).send(results);
         });
     });
 });

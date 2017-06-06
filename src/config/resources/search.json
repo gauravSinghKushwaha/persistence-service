@@ -55,8 +55,8 @@
           "integer"
         ],
         "enum": [
-          "asc",
-          "desc"
+          "ASC",
+          "DESC"
         ],
         "description": "ascending or descending"
       }
@@ -72,6 +72,18 @@
         "string"
       ],
       "description": "number of rows"
+    },
+    "offset": {
+      "type": "integer",
+      "minLength": 1,
+      "maxLength": 3,
+      "minimum": 1,
+      "maximum": 999,
+      "disallow": [
+        "boolean",
+        "string"
+      ],
+      "description": "starts from offset'th row of the result, and then limit. e.g. for offset 5 limit 10, 6th to 15th will be returned"
     }
   }
 }
