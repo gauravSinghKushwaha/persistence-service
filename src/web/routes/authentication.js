@@ -84,7 +84,7 @@ router.route('/search').post(function (req, res) {
             log.error(err);
             return res.status(500).send(('{"error" : "' + err.toString() + '"}'));
         }
-        queryBuilder = new QueryBuilder(req, jsonValidator.getResourceSchema(req.body.table),jsonValidator.getOperationSchema(req.body.operation));
+        queryBuilder = new QueryBuilder(req, jsonValidator.getResourceSchema(req.body.table), jsonValidator.getOperationSchema(req.body.operation));
         query = queryBuilder.findByIDQuery();
         console.log(query);
         connection.query(query.query, query.values, function (err, results, fields) {
@@ -95,6 +95,11 @@ router.route('/search').post(function (req, res) {
             }
             console.log(results);
             console.log('results = ' + results + '\t\tfields = ' + fields);
+            results.forEach(function (obj) {
+                Object.keys(obj).forEach(function (k) {
+                    obj[k] = queryBuilder.decryptValues(k, obj[k]);
+                });
+            });
             res.status(200);
             return res.status(200).send(results);
         });

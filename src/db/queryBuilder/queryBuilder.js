@@ -18,7 +18,7 @@ function query(req, resourceSchema, operationSchema) {
 }
 
 /**
- *
+ *  Encrypts value
  * @param conf SCHEMA_CONF
  * @param k CURRENT_KEY string value
  * @param rawValue RAW_VALUE non encrypted
@@ -33,6 +33,17 @@ function getValue(conf, k, rawValue) {
         return (contains(conf.dates, k) ? new Date(rawValue) : rawValue);
     }
 }
+
+query.prototype.decryptValues = function (k, rawValue) {
+    if (contains(this.conf.encryptobjs, k)) {
+        return crypt.decryptText(rawValue + "");
+    } else if (contains(this.conf.dates, k)) {
+        return new Date(rawValue);
+    } else {
+        return rawValue;
+    }
+}
+
 /**
  * Based on column mentioned in body and schema, method creates conditions and values array for help building query
  */
@@ -111,7 +122,7 @@ query.prototype.findByIDQuery = function () {
     const schemaColMap = buildMap(schemaCols);
     const values = [];
 
-    console.log('fields = ' + JSON.stringify(fields) + '\nwhere= ' + JSON.stringify(where) + '\norderby = '
+    log.debug('fields = ' + JSON.stringify(fields) + '\nwhere= ' + JSON.stringify(where) + '\norderby = '
         + JSON.stringify(orderby) + '\nlimit = ' + JSON.stringify(limit) + '\noffset = ' + offset);
 
     var queryStr = 'SELECT ' + SPACE + fields.join(',') + SPACE + 'FROM' + SPACE + this.dbSchema + DOT + this.dbTable + SPACE + 'WHERE' + SPACE;
