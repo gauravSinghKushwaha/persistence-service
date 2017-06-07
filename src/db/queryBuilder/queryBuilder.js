@@ -34,14 +34,13 @@ function getValue(conf, k, rawValue) {
     }
 }
 
-query.prototype.decryptValues = function (k, rawValue) {
-    if (contains(this.conf.encryptobjs, k)) {
-        return crypt.decryptText(rawValue + "");
-    } else if (contains(this.conf.dates, k)) {
-        return new Date(rawValue);
-    } else {
-        return rawValue;
-    }
+query.prototype.decryptValues = function (results) {
+    const conf = this.conf;
+    results.forEach(function (obj) {
+        Object.keys(obj).forEach(function (k) {
+            obj[k] = contains(conf.encryptobjs, k) ? crypt.decryptText(obj[k]) : obj[k];
+        });
+    });
 }
 
 /**
@@ -110,7 +109,7 @@ query.prototype.updateQuery = function () {
  * Creates get query
  * @returns {{where: string, values: Array}}
  */
-query.prototype.findByIDQuery = function () {
+query.prototype.searchQuery = function () {
     const jsonData = this.req.body;
     const fields = jsonData.fields;
     const where = jsonData.where;
@@ -122,7 +121,17 @@ query.prototype.findByIDQuery = function () {
     const schemaColMap = buildMap(schemaCols);
     const values = [];
 
-    log.debug('fields = ' + JSON.stringify(fields) + '\nwhere= ' + JSON.stringify(where) + '\norderby = '
+    function validateFields(clause, allowedFields, actualFields) {
+        if (!containsArray(allowedFields, actualFields)) {
+            throw new Error(clause + ' only allowed on ' + JSON.stringify(allowedFields));
+        }
+        return true;
+    }
+
+    const validateInput = validateFields('Search', conf.searchconf.fields, fields) && validateFields('Where', conf.searchconf.where, Object.keys(where))
+        && validateFields('OrderBy', conf.searchconf.orderby.order, orderby.order);
+
+    log.debug('Search validation =' + validateInput + '\nfields = ' + JSON.stringify(fields) + '\nwhere= ' + JSON.stringify(where) + '\norderby = '
         + JSON.stringify(orderby) + '\nlimit = ' + JSON.stringify(limit) + '\noffset = ' + offset);
 
     var queryStr = 'SELECT ' + SPACE + fields.join(',') + SPACE + 'FROM' + SPACE + this.dbSchema + DOT + this.dbTable + SPACE + 'WHERE' + SPACE;
@@ -144,6 +153,32 @@ query.prototype.findByIDQuery = function () {
 }
 
 /**
+ * Find resource by ID
+ * @param table
+ * @param schema
+ * @param id
+ */
+query.prototype.findById = function (table, schema, id) {
+    return {
+        "query": 'SELECT * FROM ' + schema + '.' + table + SPACE + 'WHERE ' + this.conf.pk + ' = ? ',
+        "values": [id]
+    };
+}
+
+/**
+ * Find resource by ID
+ * @param table
+ * @param schema
+ * @param id
+ */
+query.prototype.deleteById = function (table, schema, id) {
+    return {
+        "query": 'DELETE FROM ' + schema + '.' + table + SPACE + 'WHERE ' + this.conf.pk + ' = ? ',
+        "values": [id]
+    };
+}
+
+/**
  * Checks obj presence in array
  * @param arr
  * @param obj
@@ -151,6 +186,19 @@ query.prototype.findByIDQuery = function () {
  */
 function contains(arr, obj) {
     return arr != null && arr.indexOf(obj) > -1;
+}
+/**
+ * true if all the elements of subArray are in array
+ * @param array
+ * @param subArray
+ */
+function containsArray(array, subArray) {
+    for (i = 0; i < subArray.length; i++) {
+        if (!contains(array, subArray[i])) {
+            return false;
+        }
+    }
+    return true;
 }
 
 /**

@@ -87,7 +87,27 @@ Postman-Token: 7b608aad-6972-1f01-3abd-810385f3822e
   }
 }
 
-3) SEARCH
+3) GET By ID
+
+GET /river/v1/resources/55?schema=river&amp;table=user HTTP/1.1
+Host: localhost:9090
+Content-Type: application/json
+Authorization: Basic cml2ZXItZWphYjoxQDMkNV43KjkpLSs=
+Cache-Control: no-cache
+Postman-Token: f32b34cb-6121-504a-61b8-c706b32edaa9
+
+
+4) DELETE By ID
+
+DELETE /river/v1/resources/56?schema=river&table=user HTTP/1.1
+Host: localhost:9090
+Content-Type: application/json
+Authorization: Basic cml2ZXItZWphYjoxQDMkNV43KjkpLSs=
+Cache-Control: no-cache
+Postman-Token: 54141262-a202-788e-9b4c-fa384d3fbb2c
+
+
+5) SEARCH by Search criteria
 
 POST /river/v1/search HTTP/1.1
 Host: localhost:9090

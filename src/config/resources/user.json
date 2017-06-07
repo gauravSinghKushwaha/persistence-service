@@ -240,17 +240,17 @@
           "phonenumber",
           "email",
           "created_on",
-          "updated_on"
+          "update_on"
         ],
         "orderby": {
-          "cols": [
+          "order": [
             "status",
             "phonenumber",
             "email",
             "created_on",
-            "updated_on"
+            "update_on"
           ],
-          "order": [
+          "by": [
             "asc",
             "desc"
           ]
