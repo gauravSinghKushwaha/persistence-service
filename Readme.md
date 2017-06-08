@@ -160,3 +160,20 @@ Postman-Token: d8539cc8-ef1f-8038-1500-3e96e5960277
   "limit":200
 }
 
+6) POST delete based on criteria
+
+POST /river/v1/delete HTTP/1.1
+Host: localhost:9090
+Content-Type: application/json
+Authorization: Basic cml2ZXItZWphYjoxQDMkNV43KjkpLSs=
+Cache-Control: no-cache
+Postman-Token: c4ae08b1-3576-8fb1-1955-cb25f10f3ffc
+
+{  
+  "schema":"river",
+  "table":"user",
+  "operation":"delete",
+  "where":{  
+      "id":52
+ }
+}
