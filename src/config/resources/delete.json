@@ -1,0 +1,30 @@
+{
+  "description": "search criteria object",
+  "type": "object",
+  "properties": {
+    "operation": {
+      "type": "string",
+      "description": "which operation this json schema represents",
+      "required": true,
+      "enum": [
+        "delete"
+      ]
+    },
+    "schema": {
+      "type": "string",
+      "description": "DB schema to be used",
+      "required": true
+    },
+    "table": {
+      "type": "string",
+      "required": true,
+      "description": "DB table to be used"
+    },
+    "where": {
+      "type": "object",
+      "required": true,
+      "minProperties": 1,
+      "maxProperties": 4
+    }
+  }
+}

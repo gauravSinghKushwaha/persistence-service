@@ -2,26 +2,28 @@
 
 This is a NodeJs based REST module. Which can be used as a generic resource server to store information in DB.
 
-1) Takes generic properties from dev.properties. Can be put ANYWHERE , Can be named ANYTHING
-2) Takes DB properties and connection settings from db.properties. Can be put ANYWHERE , Can be named ANYTHING
-3) Uses basic auth for api caller authentication, use credentials given in properties file as of now.
-4) Hashes of sensitive information like password. Default algo - SHA-256, could be configured using properties file.
+1) Takes regular properties properties from /src/config/properties/dev.properties. Can be put ANYWHERE , Can be named ANYTHING
+2) Takes DB properties and connection settings from /src/config/properties/db.properties. Can be put ANYWHERE , Can be named ANYTHING
+3) Uses basic auth for api caller authentication, use credentials given in properties file /src/config/properties/dev.properties as of now.
+4) Hashes of sensitive information like password. Default algo - SHA-256, could be configured using properties file /src/config/properties/dev.properties.
    Fields requiring hashing could be declared in resource conf file located in folder ./src/config/resources.[Folder can be put ANYWHERE ,Folder Can be named ANYTHING]
-5) It Logs access logs for all the rest calls in directory/file configured in properties file.
-6) It Logs application logs in directory/file configured in properties. Level of  logs could be controlled from config as well. e.g warn,debug,info,error
-7) all the Rest API routes are mentioned in routes folder
-8) Server running port could be changed from config along with API's versioning.
-9) Encrypts sensitive information like email,phone-number. Default algo - aes-256-ctr, could be configured using properties file.
-   Fields requiring encryption could be declared in resource conf file located in folder ./src/config/resources.[Folder can be put ANYWHERE ,Folder Can be named ANYTHING]
+5) It Logs access logs for all the rest calls in directory/file configured in properties file /src/config/properties/dev.properties.
+6) It Logs application logs in directory/file configured in properties /src/config/properties/dev.properties.
+    Level of  logs could be controlled from config as well. e.g warn,debug,info,error
+7) Server running port could be changed from config along with API's versioning using /src/config/properties/dev.properties.
+8) Encrypts sensitive information like email,phone-number. Default algo - aes-256-ctr, could be configured using properties file /src/config/properties/dev.properties.
+   Fields requiring encryption could be declared in resource conf file located in folder ./src/config/resources/{resource}-conf.json.
+   [Folder can be put ANYWHERE ,Folder Can be named ANYTHING]
 
 RUNNING SERVER
 
 1) With default properties files and resource folder
 node .
+[will use /src/config/properties/dev.properties /src/config/properties/db.properties /src/config/resources as default.]
 
 2) With properties file names and resource folder name taken from command line input. These are searched in ./src/config folder by default
 node . dev.properties db.properties resources
-
+[will use /src/config/properties/ /src/config/properties/ /src/config/ as default location for conf argument.]
 
 3) With properties files and resource folder taken from user given location using command line input.
 node . c://proper/abc.properties c://proper/xyz.properties c://proper/resource
@@ -157,3 +159,4 @@ Postman-Token: d8539cc8-ef1f-8038-1500-3e96e5960277
   "offset":20,
   "limit":200
 }
+

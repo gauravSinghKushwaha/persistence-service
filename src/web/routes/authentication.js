@@ -44,7 +44,7 @@ router.route('/resources').post(function (req, res) {
             log.error(err);
             return res.status(500).send(('{"error" : "' + err.toString() + '"}'));
         }
-        qb = new QueryBuilder(req, jsonValidator.getResourceSchema(req.body.table));
+        qb = new QueryBuilder(req, jsonValidator.getSchema(req.body.table), jsonValidator.getConf(req.body.table));
         q = qb.createInsertQuery();
         log.debug(q);
         connection.query(q.query, q.values, function (err, results, fields) {
@@ -66,7 +66,7 @@ router.route('/resources/:id').put(function (req, res) {
             log.error(err);
             return res.status(500).send(('{"error" : "' + err.toString() + '"}'));
         }
-        qb = new QueryBuilder(req, jsonValidator.getResourceSchema(req.body.table));
+        qb = new QueryBuilder(req, jsonValidator.getSchema(req.body.table), jsonValidator.getConf(req.body.table));
         q = qb.updateQuery();
         log.debug(q);
         connection.query(q.query, q.values, function (err, results, fields) {
@@ -89,7 +89,7 @@ router.route('/search').post(function (req, res) {
             return res.status(500).send(('{"error" : "' + err.toString() + '"}'));
         }
         try {
-            qb = new QueryBuilder(req, jsonValidator.getResourceSchema(req.body.table), jsonValidator.getOperationSchema(req.body.operation));
+            qb = new QueryBuilder(req, jsonValidator.getSchema(req.body.operation), jsonValidator.getConf(req.body.table));
             q = qb.searchQuery();
             log.debug(q);
             connection.query(q.query, q.values, function (err, results, fields) {
@@ -116,13 +116,13 @@ router.route('/resources/:id').get(function (req, res) {
     const table = req.query.table;
     const schema = req.query.schema;
     const id = req.params.id;
-    if (table && schema && id && jsonValidator.getResourceSchema(table)) {
+    if (table && schema && id && jsonValidator.getSchema(table)) {
         con.execute(con.READ, function (err, connection) {
             if (err) {
                 log.error(err);
                 return res.status(500).send(('{"error" : "' + err.toString() + '"}'));
             }
-            qb = new QueryBuilder(req, jsonValidator.getResourceSchema(table));
+            qb = new QueryBuilder(req, jsonValidator.getSchema(table), jsonValidator.getConf(table));
             q = qb.findById(table, schema, id);
             log.debug(q);
             connection.query(q.query, q.values, function (err, results, fields) {
@@ -148,13 +148,13 @@ router.route('/resources/:id').delete(function (req, res) {
     const table = req.query.table;
     const schema = req.query.schema;
     const id = req.params.id;
-    if (table && schema && id && jsonValidator.getResourceSchema(table)) {
+    if (table && schema && id && jsonValidator.getSchema(table)) {
         con.execute(con.WRITE, function (err, connection) {
             if (err) {
                 log.error(err);
                 return res.status(500).send(('{"error" : "' + err.toString() + '"}'));
             }
-            qb = new QueryBuilder(req, jsonValidator.getResourceSchema(table));
+            qb = new QueryBuilder(req, jsonValidator.getSchema(table), jsonValidator.getConf(table));
             q = qb.deleteById(table, schema, id);
             log.debug(q);
             connection.query(q.query, q.values, function (err, results, fields) {
@@ -171,6 +171,34 @@ router.route('/resources/:id').delete(function (req, res) {
     } else {
         return res.status(400).send('Wrong request, Either table, schema , id is missing.');
     }
+});
+
+/*POST SEARCH*/
+router.route('/delete').post(function (req, res) {
+    con.execute(con.READ, function (err, connection) {
+        if (err) {
+            log.error(err);
+            return res.status(500).send(('{"error" : "' + err.toString() + '"}'));
+        }
+        try {
+            qb = new QueryBuilder(req, jsonValidator.getSchema(req.body.operation), jsonValidator.getConf(req.body.table));
+            q = qb.deleteQuery();
+            log.debug(q);
+            console.log(JSON.stringify(q))
+            connection.query(q.query, q.values, function (err, results, fields) {
+                connection.release();
+                if (err) {
+                    log.error(err);
+                    return res.status(500).send(('{"error" : "' + err.toString() + '"}'));
+                }
+                log.debug('results = ' + JSON.stringify(results) + '\t\tfields = ' + JSON.stringify(fields));
+                return res.status(200).send(results);
+            });
+        } catch (err) {
+            log.error(err);
+            return res.status(err.id ? err.id : 500).send(('{"error" : "' + err.toString() + '"}'));
+        }
+    });
 });
 
 module.exports = router;
