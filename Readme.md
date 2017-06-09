@@ -21,14 +21,18 @@ RUNNING SERVER
 node .
 [will use /src/config/properties/dev.properties /src/config/properties/db.properties /src/config/resources as default.]
 
-2) With properties file names and resource folder name taken from command line input. These are searched in ./src/config folder by default
+2) With properties file names and resource folder display_name taken from command line input. These are searched in ./src/config folder by default
 node . dev.properties db.properties resources
 [will use /src/config/properties/ /src/config/properties/ /src/config/ as default location for conf argument.]
 
 3) With properties files and resource folder taken from user given location using command line input.
 node . c://proper/abc.properties c://proper/xyz.properties c://proper/resource
 
-CURL COMMANDS
+POSTMAN COLLECTION
+
+https://www.getpostman.com/collections/8015c8fd8b51a63a988f
+
+Example CURL COMMANDS
 
 1) CREATE
 
@@ -44,8 +48,8 @@ Postman-Token: f4af6d3e-d1ce-49ef-8263-ae3035944c54
   "table":"user",
   "cached":true,
   "attr":{
-    "user_id":"meuser21",
-    "name":"displayme22",
+    "username":"meuser21",
+    "display_name":"displayme22",
     "password":"ad7878addf",
     "phonenumber":9999999999,
     "email":"abc@xyz.com",
@@ -75,8 +79,8 @@ Postman-Token: 7b608aad-6972-1f01-3abd-810385f3822e
   "table":"user",
   "cached":true,
   "attr":{
-    "user_id":"c6hor",
-    "name":"kahin6ka",
+    "username":"c6hor",
+    "display_name":"kahin6ka",
     "password":"nodfdfdfd",
     "phonenumber":9999999999,
     "email":"abc@xyz.com",
@@ -124,8 +128,8 @@ Postman-Token: d8539cc8-ef1f-8038-1500-3e96e5960277
   "operation":"search",
   "fields":[
   	"id",
-    "user_id",
-    "name",
+    "username",
+    "display_name",
     "password",
     "phonenumber",
     "email",
@@ -177,3 +181,11 @@ Postman-Token: c4ae08b1-3576-8fb1-1955-cb25f10f3ffc
       "id":52
  }
 }
+
+
+Parkings :
+
+1) Introduce caching...
+2) return IDs from postDelete and PUT
+3) Reading blob binary and text both =>> var buffer = new Buffer( blob, 'binary' ); var bufferBase64 = buffer.toString('base64'); OR myObject.myBlobAttr.toString('utf-8')
+4) Writing blob binary and text both =>>     var buffer = new Buffer(fileSize); add buffer to values

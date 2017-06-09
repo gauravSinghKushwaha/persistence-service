@@ -1,0 +1,25 @@
+{
+  "decription": [
+    "pk is primary key",
+    "If col name in hashed/encrypted, col value will be hashed/encrypted before saving to db.",
+    "If col name in auto col, value will not be taken from payload, but generated at DB e.g. pk",
+    "dates is list of columns with value as date/time. "
+  ],
+  "cached": false,
+  "pk": "username",
+  "searchconf": {
+    "fields": [
+      "seconds",
+      "state"
+    ],
+    "where": [
+      "username"
+    ],
+    "resultlimit": "200"
+  },
+  "deleteconf": {
+    "where": [
+      "username"
+    ]
+  }
+}

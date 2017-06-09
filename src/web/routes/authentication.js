@@ -30,7 +30,6 @@ router.use(function timeLog(req, res, next) {
     try {
         jsonValidator.validate(req.body);
     } catch (err) {
-        console.log(err);
         log.error(err);
         return res.status(400).send(('{"error" : "' + err.toString() + '"}'));
     }
@@ -54,7 +53,7 @@ router.route('/resources').post(function (req, res) {
                 return res.status(500).send(('{"error" : "' + err.toString() + '"}'));
             }
             log.debug('results = ' + JSON.stringify(results) + '\t\tfields = ' + JSON.stringify(fields));
-            return res.status(201).send(('{"id" : "' + results.insertId + '"}'));
+            return res.status(201).send((results.insertId > 0 ? '{"id" : "' + results.insertId + '"}' : '{"rows" : "' + results.affectedRows + '"}'));
         });
     });
 });
@@ -164,8 +163,7 @@ router.route('/resources/:id').delete(function (req, res) {
                     return res.status(500).send(('{"error" : "' + err.toString() + '"}'));
                 }
                 log.debug('results = ' + JSON.stringify(results) + '\t\tfields = ' + JSON.stringify(fields));
-                console.log('results = ' + JSON.stringify(results) + '\t\tfields = ' + JSON.stringify(fields));
-                return res.status(200).send('{"affectedRows" : "' + results.affectedRows + '"}');
+                return res.status(200).send('{"deleted" : "' + results.affectedRows + '"}');
             });
         });
     } else {
@@ -175,7 +173,7 @@ router.route('/resources/:id').delete(function (req, res) {
 
 /*POST SEARCH*/
 router.route('/delete').post(function (req, res) {
-    con.execute(con.READ, function (err, connection) {
+    con.execute(con.WRITE, function (err, connection) {
         if (err) {
             log.error(err);
             return res.status(500).send(('{"error" : "' + err.toString() + '"}'));
@@ -184,7 +182,6 @@ router.route('/delete').post(function (req, res) {
             qb = new QueryBuilder(req, jsonValidator.getSchema(req.body.operation), jsonValidator.getConf(req.body.table));
             q = qb.deleteQuery();
             log.debug(q);
-            console.log(JSON.stringify(q))
             connection.query(q.query, q.values, function (err, results, fields) {
                 connection.release();
                 if (err) {
@@ -192,7 +189,7 @@ router.route('/delete').post(function (req, res) {
                     return res.status(500).send(('{"error" : "' + err.toString() + '"}'));
                 }
                 log.debug('results = ' + JSON.stringify(results) + '\t\tfields = ' + JSON.stringify(fields));
-                return res.status(200).send(results);
+                return res.status(200).send('{"deleted" : "' + results.affectedRows + '"}');
             });
         } catch (err) {
             log.error(err);

@@ -1,15 +1,16 @@
 {
   "decription": [
     "pk is primary key",
-    "If col name in hashobjs/encryptobjs, col value will be hashed/encrypted before saving to db.",
-    "If col name in autoids/autodates col, value will not be taken from payload, but generated at DB e.g. pk",
+    "If col name in hashed/encrypted, col value will be hashed/encrypted before saving to db.",
+    "If col name in auto col, value will not be taken from payload, but generated at DB e.g. pk",
     "dates is list of columns with value as date/time. "
   ],
+  "cached": true,
   "pk": "id",
-  "hashobjs": [
+  "hashed": [
     "password"
   ],
-  "encryptobjs": [
+  "encrypted": [
     "email",
     "phonenumber"
   ],
@@ -17,17 +18,15 @@
     "created_on",
     "update_on"
   ],
-  "autoids": [
-    "id"
-  ],
-  "autodates": [
+  "auto": [
+    "id",
     "created_on"
   ],
   "searchconf": {
     "fields": [
       "id",
-      "user_id",
-      "name",
+      "username",
+      "display_name",
       "password",
       "phonenumber",
       "email",
@@ -42,8 +41,8 @@
     ],
     "where": [
       "id",
-      "user_id",
-      "name",
+      "username",
+      "display_name",
       "phonenumber",
       "email",
       "created_on",
@@ -67,8 +66,8 @@
   "deleteconf": {
     "where": [
       "id",
-      "user_id",
-      "name",
+      "username",
+      "display_name",
       "phonenumber",
       "email"
     ]
