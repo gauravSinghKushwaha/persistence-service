@@ -12,16 +12,6 @@
       "required": true,
       "description": "DB table to be used"
     },
-    "cached": {
-      "type": "boolean",
-      "optional": "true",
-      "description": "flag if resource to be cached"
-    },
-    "cacheexpiry": {
-      "type": "integer",
-      "optional": "1121212",
-      "description": "cache expiry in miliseconds"
-    },
     "attr": {
       "type": "object",
       "minProperties": 10,

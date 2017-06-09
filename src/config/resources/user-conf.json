@@ -5,7 +5,10 @@
     "If col name in auto col, value will not be taken from payload, but generated at DB e.g. pk",
     "dates is list of columns with value as date/time. "
   ],
-  "cached": true,
+  "cached": {
+    "allowed": false,
+    "expiry": 99999
+  },
   "pk": "id",
   "hashed": [
     "password"
@@ -20,7 +23,8 @@
   ],
   "auto": [
     "id",
-    "created_on"
+    "created_on",
+    "update_on"
   ],
   "searchconf": {
     "fields": [

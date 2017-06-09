@@ -5,7 +5,9 @@
     "If col name in auto col, value will not be taken from payload, but generated at DB e.g. pk",
     "dates is list of columns with value as date/time. "
   ],
-  "cached": false,
+  "cached": {
+    "allowed": false
+  },
   "pk": "seq",
   "encrypted": [
     "xml"
@@ -14,7 +16,10 @@
     "created_at"
   ],
   "blob": [
-    "xml"
+    {
+      "col": "xml",
+      "type": "string"
+    }
   ],
   "auto": [
     "seq",
