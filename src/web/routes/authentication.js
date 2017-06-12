@@ -57,12 +57,12 @@ post = function (req, res) {
                 return res.status(201).send((results.insertId > 0 ? '{"id" : "' + results.insertId + '"}' : '{"rows" : "' + results.affectedRows + '"}'));
             });
         } catch (err) {
-            log.error(err);
             connection.release();
+            log.error(err);
             return res.status(err.id ? err.id : 500).send(('{"error" : "' + err.toString() + '"}'));
         }
     });
-}
+};
 
 put = function (req, res) {
     const id = req.params.id;
@@ -86,8 +86,8 @@ put = function (req, res) {
                     return res.status(200).send('{"affectedRows" : "' + results.affectedRows + '"}');
                 });
             } catch (err) {
-                log.error(err);
                 connection.release();
+                log.error(err);
                 return res.status(err.id ? err.id : 500).send(('{"error" : "' + err.toString() + '"}'));
             }
         });
@@ -95,7 +95,7 @@ put = function (req, res) {
     else {
         return res.status(400).send('id is missing.');
     }
-}
+};
 
 
 postSearch = function (req, res) {
@@ -119,12 +119,12 @@ postSearch = function (req, res) {
                 return res.status(200).send(results);
             });
         } catch (err) {
-            log.error(err);
             connection.release();
+            log.error(err);
             return res.status(err.id ? err.id : 500).send(('{"error" : "' + err.toString() + '"}'));
         }
     });
-}
+};
 
 get = function (req, res) {
     const table = req.query.table;
@@ -151,8 +151,8 @@ get = function (req, res) {
                     return res.status(200).send(results);
                 });
             } catch (err) {
-                log.error(err);
                 connection.release();
+                log.error(err);
                 return res.status(err.id ? err.id : 500).send(('{"error" : "' + err.toString() + '"}'));
             }
         });
@@ -185,15 +185,15 @@ del = function (req, res) {
                     return res.status(200).send('{"deleted" : "' + results.affectedRows + '"}');
                 });
             } catch (err) {
-                log.error(err);
                 connection.release();
+                log.error(err);
                 return res.status(err.id ? err.id : 500).send(('{"error" : "' + err.toString() + '"}'));
             }
         });
     } else {
         return res.status(400).send('Wrong request, Either table, schema , id is missing.');
     }
-}
+};
 
 postDel = function (req, res) {
     con.execute(con.WRITE, function (err, connection) {
@@ -215,12 +215,12 @@ postDel = function (req, res) {
                 return res.status(200).send('{"deleted" : "' + results.affectedRows + '"}');
             });
         } catch (err) {
-            log.error(err);
             connection.release();
+            log.error(err);
             return res.status(err.id ? err.id : 500).send(('{"error" : "' + err.toString() + '"}'));
         }
     });
-}
+};
 
 getAndDelete = function (req, res) {
     const table = req.query.table;
@@ -247,15 +247,15 @@ getAndDelete = function (req, res) {
                     return res.status(200).send(results[0]);
                 });
             } catch (err) {
-                log.error(err);
                 connection.release();
+                log.error(err);
                 return res.status(err.id ? err.id : 500).send(('{"error" : "' + err.toString() + '"}'));
             }
         });
     } else {
         return res.status(400).send('Wrong request, Either table, schema , id is missing.');
     }
-}
+};
 
 putIfPresent = function (req, res) {
     const id = req.params.id;
@@ -292,8 +292,8 @@ putIfPresent = function (req, res) {
                     }
                 });
             } catch (err) {
-                log.error(err);
                 connection.release();
+                log.error(err);
                 return res.status(err.id ? err.id : 500).send(('{"error" : "' + err.toString() + '"}'));
             }
         });
@@ -301,7 +301,7 @@ putIfPresent = function (req, res) {
     else {
         return res.status(400).send('id is missing.');
     }
-}
+};
 
 /*CREATE*/
 router.route('/resources').post(function (req, res) {
@@ -356,7 +356,7 @@ router.route('/getanddelete/resources/:id').get(function (req, res) {
 /*UPDATE*/
 
 router.route('/putifpresent/resources/:id').post(function (req, res) {
-
+    putIfPresent(req, res);
 });
 
 
