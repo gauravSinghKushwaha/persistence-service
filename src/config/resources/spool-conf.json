@@ -8,7 +8,7 @@
   "cached": {
     "allowed": false
   },
-  "pk": "seq",
+  "pk": "username",
   "encrypted": [
     "xml"
   ],

@@ -75,5 +75,20 @@
       "phonenumber",
       "email"
     ]
+  },
+  "updateconf": {
+    "fields": [
+      "username",
+      "display_name",
+      "phonenumber",
+      "email",
+      "password",
+      "age",
+      "status",
+      "domain",
+      "resource",
+      "update_on",
+      "updated_by"
+    ]
   }
 }

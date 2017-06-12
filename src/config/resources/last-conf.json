@@ -23,5 +23,11 @@
     "where": [
       "username"
     ]
+  },
+  "updateconf": {
+    "fields": [
+      "seconds",
+      "state"
+    ]
   }
 }

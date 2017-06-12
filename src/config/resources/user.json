@@ -14,7 +14,7 @@
     },
     "attr": {
       "type": "object",
-      "minProperties": 10,
+      "minProperties": 1,
       "maxProperties": 14,
       "required": true,
       "description": "resource object",
@@ -37,7 +37,6 @@
             "boolean",
             "integer"
           ],
-          "required": true,
           "description": "username"
         },
         "display_name": {
@@ -58,7 +57,6 @@
             "boolean",
             "integer"
           ],
-          "required": true,
           "description": "password"
         },
         "phonenumber": {
@@ -120,7 +118,6 @@
           "enum": [
             "river.com"
           ],
-          "required": true,
           "description": "messenger domain"
         },
         "resource": {

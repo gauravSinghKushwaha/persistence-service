@@ -1,4 +1,4 @@
-                                    RESOURCE SERVER
+                                    PERSISTENCE SERVER
 
 This is a NodeJs based REST module. Which can be used as a generic resource server to store information in DB.
 
@@ -186,6 +186,20 @@ Postman-Token: c4ae08b1-3576-8fb1-1955-cb25f10f3ffc
 Parkings :
 
 1) Introduce caching...
-2) return IDs from postDelete and PUT
-3) Reading blob binary and text both =>> var buffer = new Buffer( blob, 'binary' ); var bufferBase64 = buffer.toString('base64'); OR myObject.myBlobAttr.toString('utf-8')
-4) Writing blob binary and text both =>>     var buffer = new Buffer(fileSize); add buffer to values
+
+
+To update
+POST /last/user/:username
+{
+seconds: {Seconds}
+state : {Status}
+}
+200 OK
+
+
+To add an offline message for a user
+POST /offline/user/:username
+{
+xml: {XMLMessage}
+}
+200 OK
