@@ -32,6 +32,7 @@ module.exports = {
         log.debug("mode = " + mode);
         cluster.getConnection(mode == exports.READ ? this.allSlaves : this.allMasters, function (err, connection) {
             if (err) {
+                connection.release();
                 return work(err);
             }
             work(null, connection);

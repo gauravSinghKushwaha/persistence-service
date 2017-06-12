@@ -186,13 +186,3 @@ Postman-Token: c4ae08b1-3576-8fb1-1955-cb25f10f3ffc
 Parkings :
 
 1) Introduce caching...
-
-
-To update
-POST /last/user/:username
-{
-seconds: {Seconds}
-state : {Status}
-}
-200 OK
-
