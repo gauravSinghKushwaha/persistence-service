@@ -196,10 +196,3 @@ state : {Status}
 }
 200 OK
 
-
-To add an offline message for a user
-POST /offline/user/:username
-{
-xml: {XMLMessage}
-}
-200 OK
