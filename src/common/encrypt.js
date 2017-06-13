@@ -17,7 +17,7 @@ function decrypt(text) {
     const decipher = crypto.createDecipher(algorithm, privateKey);
     var dec = decipher.update(text, HEX, UTF8);
     dec += decipher.final(UTF8);
-    log.debug('text = ' + text + ' decrypt = ' + decrypt);
+    log.debug('text = ' + text + ' decrypt = ' + dec);
     return dec;
 }
 

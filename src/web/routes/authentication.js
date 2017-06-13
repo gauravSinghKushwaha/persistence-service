@@ -1,7 +1,7 @@
 const crypt = require('./../../common/encrypt');
 const log = require('./../../log/logger');
 const conf = require('./../../config/config');
-const con = require('./../../db/connection');
+const cluster = require('./../../db/connection');
 const jsonValidator = require('./../../common/jsonInputValidation');
 const QueryBuilder = require('./../../db/queryBuilder/queryBuilder');
 const express = require('express');
@@ -38,7 +38,7 @@ router.use(function timeLog(req, res, next) {
 
 
 post = function (req, res) {
-    con.execute(con.WRITE, function (err, connection) {
+    cluster.execute(cluster.WRITE, function (err, connection) {
         if (err) {
             log.error(err);
             return res.status(500).send(('{"error" : "' + err.toString() + '"}'));
@@ -67,7 +67,7 @@ post = function (req, res) {
 put = function (req, res) {
     const id = req.params.id;
     if (id) {
-        con.execute(con.WRITE, function (err, connection) {
+        cluster.execute(cluster.WRITE, function (err, connection) {
             if (err) {
                 log.error(err);
                 return res.status(500).send(('{"error" : "' + err.toString() + '"}'));
@@ -99,7 +99,7 @@ put = function (req, res) {
 
 
 postSearch = function (req, res) {
-    con.execute(con.READ, function (err, connection) {
+    cluster.execute(cluster.READ, function (err, connection) {
         if (err) {
             log.error(err);
             return res.status(500).send(('{"error" : "' + err.toString() + '"}'));
@@ -131,7 +131,7 @@ get = function (req, res) {
     const schema = req.query.schema;
     const id = req.params.id;
     if (table && schema && id && jsonValidator.getSchema(table)) {
-        con.execute(con.READ, function (err, connection) {
+        cluster.execute(cluster.READ, function (err, connection) {
             if (err) {
                 log.error(err);
                 return res.status(500).send(('{"error" : "' + err.toString() + '"}'));
@@ -166,7 +166,7 @@ del = function (req, res) {
     const schema = req.query.schema;
     const id = req.params.id;
     if (table && schema && id && jsonValidator.getSchema(table)) {
-        con.execute(con.WRITE, function (err, connection) {
+        cluster.execute(cluster.WRITE, function (err, connection) {
             if (err) {
                 log.error(err);
                 return res.status(500).send(('{"error" : "' + err.toString() + '"}'));
@@ -196,7 +196,7 @@ del = function (req, res) {
 };
 
 postDel = function (req, res) {
-    con.execute(con.WRITE, function (err, connection) {
+    cluster.execute(cluster.WRITE, function (err, connection) {
         if (err) {
             log.error(err);
             return res.status(500).send(('{"error" : "' + err.toString() + '"}'));
@@ -227,7 +227,7 @@ getAndDelete = function (req, res) {
     const schema = req.query.schema;
     const id = req.params.id;
     if (table && schema && id && jsonValidator.getSchema(table)) {
-        con.execute(con.WRITE, function (err, connection) {
+        cluster.execute(cluster.WRITE, function (err, connection) {
             if (err) {
                 log.error(err);
                 return res.status(500).send(('{"error" : "' + err.toString() + '"}'));
@@ -260,7 +260,7 @@ getAndDelete = function (req, res) {
 putIfPresent = function (req, res) {
     const id = req.params.id;
     if (id) {
-        con.execute(con.WRITE, function (err, connection) {
+        cluster.execute(cluster.WRITE, function (err, connection) {
             if (err) {
                 log.error(err);
                 return res.status(500).send(('{"error" : "' + err.toString() + '"}'));
