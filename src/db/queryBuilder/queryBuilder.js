@@ -4,7 +4,12 @@ const crypt = require('./../../common/encrypt');
 
 const DOT = ".";
 const SPACE = " ";
-
+/**
+ * Query builder ; IF you update , check https://github.com/mysqljs/mysql for building effective and better queries
+ * @param req
+ * @param schema
+ * @param conf
+ */
 function query(req, schema, conf) {
     this.req = req;
     if (this.req && this.req.body) {
@@ -120,7 +125,14 @@ query.prototype.insertQuery = function () {
     queryStr = queryStr.substr(0, queryStr.length - 1) + ')';
 
     log.debug('query : ' + queryStr);
-    return {"query": queryStr, "values": q.values};
+    return {
+        "query": {
+            sql: queryStr,
+            nestTables: conf.query && conf.query.nesttables ? conf.query.nesttables : false,
+            timeout: conf.query && conf.query.timeout ? conf.query.timeout : 60000
+        },
+        "values": q.values
+    };
 }
 
 /**
@@ -138,7 +150,14 @@ query.prototype.updateQuery = function () {
     queryStr += q.conditions.join('= ? , ');
     queryStr += SPACE + ' = ? WHERE' + SPACE + conf.pk + ' = ?';
     q.values.push(this.req.params.id);
-    return {"query": queryStr, "values": q.values};
+    return {
+        "query": {
+            sql: queryStr,
+            nestTables: conf.query && conf.query.nesttables ? conf.query.nesttables : false,
+            timeout: conf.query && conf.query.timeout ? conf.query.timeout : 60000
+        },
+        "values": q.values
+    };
 }
 
 /**
@@ -177,7 +196,14 @@ query.prototype.searchQuery = function () {
         queryStr = queryStr + SPACE + 'OFFSET' + SPACE + offset + SPACE;
     }
 
-    return {"query": queryStr, "values": values};
+    return {
+        "query": {
+            sql: queryStr,
+            nestTables: conf.query && conf.query.nesttables ? conf.query.nesttables : false,
+            timeout: conf.query && conf.query.timeout ? conf.query.timeout : 60000
+        },
+        "values": values
+    };
 }
 
 /**
@@ -189,7 +215,11 @@ query.prototype.searchQuery = function () {
 query.prototype.findById = function (table, schema, id) {
     const conf = this.conf;
     return {
-        "query": 'SELECT ' + SPACE + conf.searchconf.fields.join(',') + SPACE + 'FROM' + SPACE + schema + '.' + table + SPACE + 'WHERE ' + conf.pk + ' = ? ',
+        "query": {
+            sql: 'SELECT ' + SPACE + conf.searchconf.fields.join(',') + SPACE + 'FROM' + SPACE + schema + '.' + table + SPACE + 'WHERE ' + conf.pk + ' = ? ',
+            nestTables: conf.query && conf.query.nesttables ? conf.query.nesttables : false,
+            timeout: conf.query && conf.query.timeout ? conf.query.timeout : 60000
+        },
         "values": [id]
     };
 }
@@ -202,7 +232,11 @@ query.prototype.findById = function (table, schema, id) {
  */
 query.prototype.deleteById = function (table, schema, id) {
     return {
-        "query": 'DELETE FROM ' + schema + '.' + table + SPACE + 'WHERE ' + this.conf.pk + ' = ? ',
+        "query": {
+            sql: 'DELETE FROM ' + schema + '.' + table + SPACE + 'WHERE ' + this.conf.pk + ' = ? ',
+            nestTables: conf.query && conf.query.nesttables ? conf.query.nesttables : false,
+            timeout: conf.query && conf.query.timeout ? conf.query.timeout : 60000
+        },
         "values": [id]
     };
 }
@@ -217,8 +251,13 @@ query.prototype.deleteById = function (table, schema, id) {
 query.prototype.getanddelete = function (table, schema, id) {
     const getQuery = this.findById(table, schema, id);
     const deleteQuery = this.deleteById(table, schema, id);
+
     return {
-        "query": getQuery.query + ';' + deleteQuery.query,
+        "query": {
+            sql: getQuery.query.sql + ';' + deleteQuery.query.sql,
+            nestTables: conf.query && conf.query.nesttables ? conf.query.nesttables : false,
+            timeout: conf.query && conf.query.timeout ? conf.query.timeout : 60000
+        },
         "values": [getQuery.values, deleteQuery.values]
     };
 }
@@ -242,7 +281,14 @@ query.prototype.deleteQuery = function () {
         values.push(getEncryptedValue(conf, k.toString(), where[k], true));
     });
 
-    return {"query": queryStr, "values": values};
+    return {
+        "query": {
+            sql: queryStr,
+            nestTables: conf.query && conf.query.nesttables ? conf.query.nesttables : false,
+            timeout: conf.query && conf.query.timeout ? conf.query.timeout : 60000
+        },
+        "values": values
+    };
 }
 
 
@@ -253,7 +299,14 @@ query.prototype.putifpresent = function () {
     const q = this.insertQuery();
     q.values.push(this.req.params.id);
     q.query = q.query + SPACE + 'ON DUPLICATE KEY UPDATE' + SPACE + this.conf.pk + ' = ?';
-    return q;
+    return {
+        "query": {
+            sql: q.query,
+            nestTables: conf.query && conf.query.nesttables ? conf.query.nesttables : false,
+            timeout: conf.query && conf.query.timeout ? conf.query.timeout : 60000
+        },
+        "values": q.values
+    };
 }
 
 /**

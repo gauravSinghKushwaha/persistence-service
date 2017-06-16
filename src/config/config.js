@@ -2,7 +2,7 @@ const fileReader = require('./../common/filereader');
 const DEF_RES_PATH = './../config/resources';
 const DEF_PROP_PATH = './../config/properties';
 const DEF_PROP = 'dev.properties';
-const DEF_DB_PROP = 'db.properties';
+const DEF_DB_PROP = 'connection.properties';
 
 module.exports = {
     config: fileReader.readFile(process.argv[2] == null ? DEF_PROP : process.argv[2], DEF_PROP_PATH),

@@ -2,6 +2,7 @@ const crypt = require('./../../common/encrypt');
 const log = require('./../../log/logger');
 const conf = require('./../../config/config');
 const cluster = require('./../../db/connection');
+const cache = require('./../../cache/cache');
 const jsonValidator = require('./../../common/jsonInputValidation');
 const QueryBuilder = require('./../../db/queryBuilder/queryBuilder');
 const express = require('express');
@@ -10,7 +11,13 @@ const router = express.Router();
 const config = conf.config;
 
 /**
- * Middleware woudl be used for authentication
+ * Calling querybuilder to build queries and executing here....
+ *
+ * IF you update , check https://github.com/mysqljs/mysql for better query building and connection usages
+ */
+
+/**
+ * Middleware would be used for authentication
  * @param  {[type]}   req  [description]
  * @param  {[type]}   res  [description]
  * @param  {Function} next [description]
@@ -36,6 +43,9 @@ router.use(function timeLog(req, res, next) {
     next();
 });
 
+function releaseConnection(connection) {
+    if (connection) connection.release();
+}
 
 post = function (req, res) {
     cluster.execute(cluster.WRITE, function (err, connection) {
@@ -48,7 +58,7 @@ post = function (req, res) {
             q = qb.insertQuery();
             log.debug(q);
             connection.query(q.query, q.values, function (err, results, fields) {
-                connection.release();
+                releaseConnection(connection);
                 if (err) {
                     log.error(err);
                     return res.status(500).send(('{"error" : "' + err.toString() + '"}'));
@@ -57,7 +67,7 @@ post = function (req, res) {
                 return res.status(201).send((results.insertId > 0 ? '{"id" : "' + results.insertId + '"}' : '{"rows" : "' + results.affectedRows + '"}'));
             });
         } catch (err) {
-            connection.release();
+            releaseConnection(connection);
             log.error(err);
             return res.status(err.id ? err.id : 500).send(('{"error" : "' + err.toString() + '"}'));
         }
@@ -77,16 +87,16 @@ put = function (req, res) {
                 q = qb.updateQuery();
                 log.debug(q);
                 connection.query(q.query, q.values, function (err, results, fields) {
-                    connection.release();
+                    releaseConnection(connection);
                     if (err) {
                         log.error(err);
                         return res.status(500).send(('{"error" : "' + err.toString() + '"}'));
                     }
                     log.debug('results = ' + JSON.stringify(results) + '\t\tfields = ' + JSON.stringify(fields));
-                    return res.status(200).send('{"affectedRows" : "' + results.affectedRows + '"}');
+                    return res.status(200).send('{"affectedRows" : "' + results.changedRows + '"}');
                 });
             } catch (err) {
-                connection.release();
+                releaseConnection(connection);
                 log.error(err);
                 return res.status(err.id ? err.id : 500).send(('{"error" : "' + err.toString() + '"}'));
             }
@@ -109,7 +119,7 @@ postSearch = function (req, res) {
             q = qb.searchQuery();
             log.debug(q);
             connection.query(q.query, q.values, function (err, results, fields) {
-                connection.release();
+                releaseConnection(connection);
                 if (err) {
                     log.error(err);
                     return res.status(500).send(('{"error" : "' + err.toString() + '"}'));
@@ -119,7 +129,7 @@ postSearch = function (req, res) {
                 return res.status(200).send(results);
             });
         } catch (err) {
-            connection.release();
+            releaseConnection(connection);
             log.error(err);
             return res.status(err.id ? err.id : 500).send(('{"error" : "' + err.toString() + '"}'));
         }
@@ -141,7 +151,7 @@ get = function (req, res) {
                 q = qb.findById(table, schema, id);
                 log.debug(q);
                 connection.query(q.query, q.values, function (err, results, fields) {
-                    connection.release();
+                    releaseConnection(connection);
                     if (err) {
                         log.error(err);
                         return res.status(500).send(('{"error" : "' + err.toString() + '"}'));
@@ -151,7 +161,7 @@ get = function (req, res) {
                     return res.status(200).send(results);
                 });
             } catch (err) {
-                connection.release();
+                releaseConnection(connection);
                 log.error(err);
                 return res.status(err.id ? err.id : 500).send(('{"error" : "' + err.toString() + '"}'));
             }
@@ -176,7 +186,7 @@ del = function (req, res) {
                 q = qb.deleteById(table, schema, id);
                 log.debug(q);
                 connection.query(q.query, q.values, function (err, results, fields) {
-                    connection.release();
+                    releaseConnection(connection);
                     if (err) {
                         log.error(err);
                         return res.status(500).send(('{"error" : "' + err.toString() + '"}'));
@@ -185,7 +195,7 @@ del = function (req, res) {
                     return res.status(200).send('{"deleted" : "' + results.affectedRows + '"}');
                 });
             } catch (err) {
-                connection.release();
+                releaseConnection(connection);
                 log.error(err);
                 return res.status(err.id ? err.id : 500).send(('{"error" : "' + err.toString() + '"}'));
             }
@@ -206,7 +216,7 @@ postDel = function (req, res) {
             q = qb.deleteQuery();
             log.debug(q);
             connection.query(q.query, q.values, function (err, results, fields) {
-                connection.release();
+                releaseConnection(connection);
                 if (err) {
                     log.error(err);
                     return res.status(500).send(('{"error" : "' + err.toString() + '"}'));
@@ -215,7 +225,7 @@ postDel = function (req, res) {
                 return res.status(200).send('{"deleted" : "' + results.affectedRows + '"}');
             });
         } catch (err) {
-            connection.release();
+            releaseConnection(connection);
             log.error(err);
             return res.status(err.id ? err.id : 500).send(('{"error" : "' + err.toString() + '"}'));
         }
@@ -237,7 +247,7 @@ getAndDelete = function (req, res) {
                 q = qb.getanddelete(table, schema, id);
                 log.debug(q);
                 connection.query(q.query, q.values, function (err, results, fields) {
-                    connection.release();
+                    releaseConnection(connection);
                     if (err) {
                         log.error(err);
                         return res.status(500).send(('{"error" : "' + err.toString() + '"}'));
@@ -247,7 +257,7 @@ getAndDelete = function (req, res) {
                     return res.status(200).send(results[0]);
                 });
             } catch (err) {
-                connection.release();
+                releaseConnection(connection);
                 log.error(err);
                 return res.status(err.id ? err.id : 500).send(('{"error" : "' + err.toString() + '"}'));
             }
@@ -275,11 +285,11 @@ putIfPresent = function (req, res) {
                         return res.status(500).send(('{"error" : "' + err.toString() + '"}'));
                     }
                     log.debug('update results = ' + JSON.stringify(results) + '\t\tfields = ' + JSON.stringify(fields));
-                    if (results.affectedRows <= 0) {
+                    if (results.changedRows <= 0) {
                         q = qb.insertQuery();
                         log.debug(q);
                         connection.query(q.query, q.values, function (err, results, fields) {
-                            connection.release();
+                            releaseConnection(connection);
                             if (err) {
                                 log.error(err);
                                 return res.status(500).send(('{"error" : "' + err.toString() + '"}'));
@@ -292,7 +302,7 @@ putIfPresent = function (req, res) {
                     }
                 });
             } catch (err) {
-                connection.release();
+                releaseConnection(connection);
                 log.error(err);
                 return res.status(err.id ? err.id : 500).send(('{"error" : "' + err.toString() + '"}'));
             }

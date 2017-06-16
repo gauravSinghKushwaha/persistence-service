@@ -186,3 +186,5 @@ Postman-Token: c4ae08b1-3576-8fb1-1955-cb25f10f3ffc
 Parkings :
 
 1) Introduce caching...
+2) Allowed operation list on resource
+3) query builder to use var options = {sql: '...', nestTables: '_', timeout: 60000}

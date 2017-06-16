@@ -32,7 +32,7 @@ Cluster.prototype.execute = function (mode, work) {
     this.cluster.getConnection(m, function (err, connection) {
         if (err) {
             log.error(err);
-            connection.release();
+            if (connection) connection.release();
             return work(err);
         }
         work(null, connection);

@@ -7,7 +7,9 @@
   ],
   "cached": {
     "allowed": false,
-    "expiry": 99999
+    "expiry": 99999,
+    "version":1,
+    "prefix":"user"
   },
   "pk": "id",
   "hashed": [
@@ -90,5 +92,9 @@
       "update_on",
       "updated_by"
     ]
+  },
+  "query": {
+    "timeout": 60000,
+    "result.nesttables": "_"
   }
 }
