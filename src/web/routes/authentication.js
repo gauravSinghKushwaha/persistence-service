@@ -35,7 +35,19 @@ router.use(function timeLog(req, res, next) {
 
     /*Validating request payload against json schema*/
     try {
+        /* validating input body against schema, for POST operation against {{res-name}}.json, for PUT against update.json,
+         for DELETE against delete.json , for POST Search against search.json */
         jsonValidator.validate(req.body);
+        // FOR PUT/Update,we need to validate data against {{res-name}}.json as well
+        if (req.body && req.body.operation && req.body.operation == 'update') {
+            const keys = Object.keys(req.body.attr);
+            for (i = 0; i < keys.length; i++) {
+                const k = keys[i].toString();
+                var obj = {};
+                obj[k] = req.body.attr[k];
+                jsonValidator.validateWithSchema(req.body.attr[k], jsonValidator.getSchema(req.body.table).properties.attr.properties[k]);
+            }
+        }
     } catch (err) {
         log.error(err);
         return res.status(400).send(('{"error" : "' + err.toString() + '"}'));
@@ -45,6 +57,15 @@ router.use(function timeLog(req, res, next) {
 
 function releaseConnection(connection) {
     if (connection) connection.release();
+}
+
+function addToCache(req, results) {
+    cache.addToCache(req.body, results, jsonValidator.getConf(req.body.table), function (err, result) {
+        if (err) {
+            log.error('error adding to cache' + err);
+        }
+        log.debug(result);
+    });
 }
 
 post = function (req, res) {
@@ -64,7 +85,8 @@ post = function (req, res) {
                     return res.status(500).send(('{"error" : "' + err.toString() + '"}'));
                 }
                 log.debug('results = ' + JSON.stringify(results) + '\t\tfields = ' + JSON.stringify(fields));
-                return res.status(201).send((results.insertId > 0 ? '{"id" : "' + results.insertId + '"}' : '{"rows" : "' + results.affectedRows + '"}'));
+                //addToCache(req, results);
+                return res.status(201).send('{"insertId" : ' + results.insertId + ', "changedRows" : ' + results.changedRows + ' , "affectedRows" : ' + results.affectedRows + '}');
             });
         } catch (err) {
             releaseConnection(connection);
@@ -83,7 +105,9 @@ put = function (req, res) {
                 return res.status(500).send(('{"error" : "' + err.toString() + '"}'));
             }
             try {
-                qb = new QueryBuilder(req, jsonValidator.getSchema(req.body.table), jsonValidator.getConf(req.body.table));
+                const schema = jsonValidator.getSchema(req.body.table);
+                const conf = jsonValidator.getConf(req.body.table);
+                qb = new QueryBuilder(req, schema, conf);
                 q = qb.updateQuery();
                 log.debug(q);
                 connection.query(q.query, q.values, function (err, results, fields) {
@@ -93,7 +117,7 @@ put = function (req, res) {
                         return res.status(500).send(('{"error" : "' + err.toString() + '"}'));
                     }
                     log.debug('results = ' + JSON.stringify(results) + '\t\tfields = ' + JSON.stringify(fields));
-                    return res.status(200).send('{"affectedRows" : "' + results.changedRows + '"}');
+                    return res.status(200).send('{"affectedRows" : ' + results.affectedRows + ', "changedRows" : ' + results.changedRows + '}');
                 });
             } catch (err) {
                 releaseConnection(connection);
@@ -285,7 +309,7 @@ putIfPresent = function (req, res) {
                         return res.status(500).send(('{"error" : "' + err.toString() + '"}'));
                     }
                     log.debug('update results = ' + JSON.stringify(results) + '\t\tfields = ' + JSON.stringify(fields));
-                    if (results.changedRows <= 0) {
+                    if (results.changedRows <= 0 && results.affectedRows <= 0) {
                         q = qb.insertQuery();
                         log.debug(q);
                         connection.query(q.query, q.values, function (err, results, fields) {
@@ -295,10 +319,10 @@ putIfPresent = function (req, res) {
                                 return res.status(500).send(('{"error" : "' + err.toString() + '"}'));
                             }
                             log.debug('results = ' + JSON.stringify(results) + '\t\tfields = ' + JSON.stringify(fields));
-                            return res.status(201).send((results.insertId > 0 ? '{"id" : "' + results.insertId + '"}' : '{"affectedRows" : "' + results.affectedRows + '"}'));
+                            return res.status(201).send('{"insertId" : ' + results.insertId + ', "changedRows" : ' + results.changedRows + ' , "affectedRows" : ' + results.affectedRows + '}');
                         });
                     } else {
-                        return res.status(201).send('{"affectedRows" : "' + results.affectedRows + '"}');
+                        return res.status(201).send('{"affectedRows" : ' + results.affectedRows + ', "changedRows" : ' + results.changedRows + '}');
                     }
                 });
             } catch (err) {

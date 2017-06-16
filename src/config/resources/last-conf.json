@@ -1,6 +1,6 @@
 {
   "decription": [
-    "pk is primary key",
+    "key is the column representing resource, e.g. primary key",
     "If col name in hashed/encrypted, col value will be hashed/encrypted before saving to db.",
     "If col name in auto col, value will not be taken from payload, but generated at DB e.g. pk",
     "dates is list of columns with value as date/time. "
@@ -8,7 +8,7 @@
   "cached": {
     "allowed": false
   },
-  "pk": "username",
+  "key": "username",
   "searchconf": {
     "fields": [
       "seconds",

@@ -21,17 +21,21 @@ InputValidator.prototype.getConf = function (resource) {
     return conf.resourceSchema.get(resource + CONF);
 };
 
+InputValidator.prototype.validateWithSchema = function (jsonData, schema) {
+    const result = v.validate(jsonData, schema);
+    if (result.errors != null && result.errors.length > 0) {
+        var errMsg = "JSON validation failed. Reason :: " + result.errors.join(", ");
+        log.error(errMsg);
+        throw new Error(errMsg);
+    }
+    return true;
+};
+
 InputValidator.prototype.validate = function (jsonData) {
     if (isValidationRequired(jsonData)) {
         const schema = this.getSchema(jsonData.operation ? jsonData.operation : jsonData.table);
         log.debug('jsonData = ' + JSON.stringify(jsonData) + '\n schema = ' + JSON.stringify(schema));
-        var result = v.validate(jsonData, schema);
-        if (result.errors != null && result.errors.length > 0) {
-            var errMsg = "JSON validation failed. Reason :: " + result.errors.join(", ");
-            log.error(errMsg);
-            throw new Error(errMsg);
-        }
-        return true;
+        this.validateWithSchema(jsonData, schema);
     }
     return true;
 };

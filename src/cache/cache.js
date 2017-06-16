@@ -56,4 +56,29 @@ function redisCache() {
     });
 }
 
+redisCache.prototype.addToCache = function (body, results, resConf, callBack) {
+    // auto-generated pk
+
+    if(conf.pk && autoid){
+        const key = body.table+results.insertId;
+    } else{
+        //key may have multiple values.
+        // if already there  add to list else wrap object in list add
+    }
+
+    if(results.insertId > 0){
+        const key = body.table+results.insertId
+    }else if(results.affectedRows >0) {
+
+    }
+    cache.redisClient.set("language", "nodejs", function (err, reply) {
+        if (err) {
+            console.log(err);
+            callBack(err);
+        }
+        callBack(null, reply);
+        console.log(reply);
+    });
+}
+
 module.exports = new redisCache();

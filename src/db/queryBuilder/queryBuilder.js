@@ -114,8 +114,8 @@ query.prototype.insertQuery = function () {
     var queryStr = 'INSERT INTO ' + this.dbSchema + DOT + this.dbTable + SPACE + '(';
     const q = this.createConditionsAndValues.call(this);
     log.debug('condition values from input ' + q);
-    if (isValidObject(this.req.params.id) && !contains(conf.auto, conf.pk) && !contains(q.conditions, conf.pk)) {
-        q.conditions.push(conf.pk);
+    if (isValidObject(this.req.params.id) && !contains(conf.auto, conf.key) && !contains(q.conditions, conf.key)) {
+        q.conditions.push(conf.key);
         q.values.push(this.req.params.id);
     }
     queryStr += q.conditions.join(',') + ')' + SPACE + 'values(';
@@ -144,11 +144,12 @@ query.prototype.updateQuery = function () {
     const jsonData = this.req.body;
     const fields = jsonData.attr;
     var queryStr = 'UPDATE ' + this.dbSchema + DOT + this.dbTable + SPACE + 'SET' + SPACE;
-    validateFields('Update', isValidObject(conf.updateconf) ? conf.updateconf.fields : [], Object.keys(fields));
+    const actualFields = Object.keys(fields);
+    validateFields('Update', isValidObject(conf.updateconf) ? conf.updateconf.fields : [], actualFields);
     const q = this.createConditionsAndValues.call(this);
     log.debug('condition values from input ' + q);
     queryStr += q.conditions.join('= ? , ');
-    queryStr += SPACE + ' = ? WHERE' + SPACE + conf.pk + ' = ?';
+    queryStr += SPACE + ' = ? WHERE' + SPACE + conf.key + ' = ?';
     q.values.push(this.req.params.id);
     return {
         "query": {
@@ -216,7 +217,7 @@ query.prototype.findById = function (table, schema, id) {
     const conf = this.conf;
     return {
         "query": {
-            sql: 'SELECT ' + SPACE + conf.searchconf.fields.join(',') + SPACE + 'FROM' + SPACE + schema + '.' + table + SPACE + 'WHERE ' + conf.pk + ' = ? ',
+            sql: 'SELECT ' + SPACE + conf.searchconf.fields.join(',') + SPACE + 'FROM' + SPACE + schema + '.' + table + SPACE + 'WHERE ' + conf.key + ' = ? ',
             nestTables: conf.query && conf.query.nesttables ? conf.query.nesttables : false,
             timeout: conf.query && conf.query.timeout ? conf.query.timeout : 60000
         },
@@ -233,7 +234,7 @@ query.prototype.findById = function (table, schema, id) {
 query.prototype.deleteById = function (table, schema, id) {
     return {
         "query": {
-            sql: 'DELETE FROM ' + schema + '.' + table + SPACE + 'WHERE ' + this.conf.pk + ' = ? ',
+            sql: 'DELETE FROM ' + schema + '.' + table + SPACE + 'WHERE ' + this.conf.key + ' = ? ',
             nestTables: conf.query && conf.query.nesttables ? conf.query.nesttables : false,
             timeout: conf.query && conf.query.timeout ? conf.query.timeout : 60000
         },
@@ -298,7 +299,7 @@ query.prototype.deleteQuery = function () {
 query.prototype.putifpresent = function () {
     const q = this.insertQuery();
     q.values.push(this.req.params.id);
-    q.query = q.query + SPACE + 'ON DUPLICATE KEY UPDATE' + SPACE + this.conf.pk + ' = ?';
+    q.query = q.query + SPACE + 'ON DUPLICATE KEY UPDATE' + SPACE + this.conf.key + ' = ?';
     return {
         "query": {
             sql: q.query,
