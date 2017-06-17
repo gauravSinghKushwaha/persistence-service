@@ -166,7 +166,7 @@ Postman-Token: d8539cc8-ef1f-8038-1500-3e96e5960277
 
 6) POST delete based on criteria
 
-POST /river/v1/delete HTTP/1.1
+DELETE /river/v1/delete HTTP/1.1
 Host: localhost:9091
 Content-Type: application/json
 Authorization: Basic cml2ZXItZWphYjoxQDMkNV43KjkpLSs=
@@ -182,6 +182,33 @@ Postman-Token: c4ae08b1-3576-8fb1-1955-cb25f10f3ffc
  }
 }
 
+7) GetAndDelete ::  Delete and send resource in response.
+
+DELETE /river/v1/getanddelete/resources/ddfdfd?schema=river&amp;table=last HTTP/1.1
+Host: localhost:9091
+Content-Type: application/json
+Authorization: Basic cml2ZXItZWphYjoxQDMkNV43KjkpLSs=
+Cache-Control: no-cache
+Postman-Token: c5bf15fa-2775-c0dc-dd8b-77595f33d107
+
+8) PutIfPresent : if resource present then update else CREATE it
+
+PUT /river/v1/putifpresent/resources/ddfdfd HTTP/1.1
+Host: localhost:9091
+Content-Type: application/json
+Authorization: Basic cml2ZXItZWphYjoxQDMkNV43KjkpLSs=
+Cache-Control: no-cache
+Postman-Token: 4fc39a84-1eec-85d1-607b-cf2f2bf07a3e
+
+{  
+  "schema":"river",
+  "table":"last",
+  "operation":"update",
+  "attr":{  
+    "seconds":"100000",
+    "state":"hi theredfdfdfdfdf,ec bk"
+  }
+}
 
 Parkings :
 
