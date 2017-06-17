@@ -1,6 +1,8 @@
 {
   "decription": [
-    "key is the column representing resource",
+    "operation, allowed operation on resource",
+    "cached , it true resource would be cached",
+    "key is the column on which resource will be CRUD. e.g. pk, username",
     "If col name in hashed/encrypted, col value will be hashed/encrypted before saving to db.",
     "If col name in auto col, value will not be taken from payload, but generated at DB e.g. pk",
     "dates is list of columns with value as date/time. "
@@ -8,6 +10,11 @@
   "cached": {
     "allowed": false
   },
+  "operation": [
+    "GET",
+    "DELETE",
+    "POST"
+  ],
   "key": "username",
   "encrypted": [
     "xml"

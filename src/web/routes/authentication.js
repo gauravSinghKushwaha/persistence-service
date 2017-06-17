@@ -35,17 +35,25 @@ router.use(function timeLog(req, res, next) {
 
     /*Validating request payload against json schema*/
     try {
+        const table = req.body.table ? req.body.table : req.query.table;
+        const conf = jsonValidator.getConf(table);
+        if (conf && conf.operation.indexOf(req.method) == -1) {
+            throw new Error('Operation ' + req.method + ' not allowed on resource ' + table);
+        }
+
         /* validating input body against schema, for POST operation against {{res-name}}.json, for PUT against update.json,
          for DELETE against delete.json , for POST Search against search.json */
         jsonValidator.validate(req.body);
+
         // FOR PUT/Update,we need to validate data against {{res-name}}.json as well
-        if (req.body && req.body.operation && req.body.operation == 'update') {
+        const schema = jsonValidator.getSchema(req.body.table);
+        if (schema && req.body && req.body.operation == 'update') {
             const keys = Object.keys(req.body.attr);
             for (i = 0; i < keys.length; i++) {
                 const k = keys[i].toString();
                 var obj = {};
                 obj[k] = req.body.attr[k];
-                jsonValidator.validateWithSchema(req.body.attr[k], jsonValidator.getSchema(req.body.table).properties.attr.properties[k]);
+                jsonValidator.validateWithSchema(req.body.attr[k], schema.properties.attr.properties[k]);
             }
         }
     } catch (err) {
@@ -353,11 +361,6 @@ router.route('/resources/:id').put(function (req, res) {
     put(req, res);
 });
 
-/*POST SEARCH*/
-router.route('/search').post(function (req, res) {
-    postSearch(req, res);
-});
-
 /**
  * GET
  */
@@ -372,24 +375,30 @@ router.route('/resources/:id').delete(function (req, res) {
     del(req, res);
 });
 
-/*POST CONDITIONAL DELETE*/
-router.route('/delete').post(function (req, res) {
+/*POST SEARCH*/
+router.route('/search').post(function (req, res) {
+    postSearch(req, res);
+});
+
+
+/* CONDITIONAL DELETE*/
+router.route('/delete').delete(function (req, res) {
     postDel(req, res);
 });
 
 /**
- * GET AND Delete the same
+ * get and DELETE the same
  */
-router.route('/getanddelete/resources/:id').get(function (req, res) {
+router.route('/getanddelete/resources/:id').delete(function (req, res) {
     getAndDelete(req, res);
 });
 
 /**
- * PUT if present else POST
+ * PUT if present else create
  */
 /*UPDATE*/
 
-router.route('/putifpresent/resources/:id').post(function (req, res) {
+router.route('/putifpresent/resources/:id').put(function (req, res) {
     putIfPresent(req, res);
 });
 
