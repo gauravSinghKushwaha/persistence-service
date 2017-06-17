@@ -34,27 +34,34 @@ router.use(function timeLog(req, res, next) {
     }
 
     /*Validating request payload against json schema*/
+    function validateInputValueAgainstSchema(schema, colValArray) {
+        const keys = Object.keys(colValArray);
+        for (i = 0; i < keys.length; i++) {
+            const k = keys[i].toString();
+            var obj = {};
+            obj[k] = colValArray[k];
+            jsonValidator.validateWithSchema(colValArray[k], schema.properties.attr.properties[k]);
+        }
+    }
+
     try {
+        /* validating req.method against allowed HTTP verb on resource*/
         const table = req.body.table ? req.body.table : req.query.table;
         const conf = jsonValidator.getConf(table);
-        if (conf && conf.operation.indexOf(req.method) == -1) {
+        if (conf && conf.operation && conf.operation.indexOf(req.method) == -1) {
             throw new Error('Operation ' + req.method + ' not allowed on resource ' + table);
         }
 
-        /* validating input body against schema, for POST operation against {{res-name}}.json, for PUT against update.json,
-         for DELETE against delete.json , for POST Search against search.json */
+        /* validating input body against allowed schema, for POST operation against {{res-name}}.json,
+         for PUT against update.json, for DELETE against delete.json , for POST Search against search.json */
         jsonValidator.validate(req.body);
 
-        // FOR PUT/Update,we need to validate data against {{res-name}}.json as well
+        /* FOR PUT/Update,we need to validate data against {{res-name}}.json as well */
         const schema = jsonValidator.getSchema(req.body.table);
         if (schema && req.body && req.body.operation == 'update') {
-            const keys = Object.keys(req.body.attr);
-            for (i = 0; i < keys.length; i++) {
-                const k = keys[i].toString();
-                var obj = {};
-                obj[k] = req.body.attr[k];
-                jsonValidator.validateWithSchema(req.body.attr[k], schema.properties.attr.properties[k]);
-            }
+            validateInputValueAgainstSchema(schema, req.body.attr);
+        } else if (schema && req.body && ( req.body.operation == 'delete' || req.body.operation == 'search')) {
+            validateInputValueAgainstSchema(schema, req.body.where);
         }
     } catch (err) {
         log.error(err);
