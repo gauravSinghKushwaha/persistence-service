@@ -1,7 +1,7 @@
 const conf = require('./../config/config');
 const config = conf.config;const log = require('./../log/logger');
 const morgan = require('./../log/accessLogger');
-const router = require('./routes/authentication')
+const router = require('./routes/webroutes')
 const helmet = require('helmet');
 const compression = require('compression');
 const bodyParser = require('body-parser');

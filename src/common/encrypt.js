@@ -6,11 +6,6 @@ const UTF8 = 'utf8';
 const HEX = 'hex';
 const config = conf.config;
 
-const algorithm = config.encrypt.algorithm == null ? 'aes-256-ctr' : config.encrypt.algorithm;
-const privateKey = config.encrypt.key == null ? '1@3$5^7*9)-+' : config.encrypt.key;
-const hashAlgo = config.encrypt.hashalgo == null ? 'sha256' : config.encrypt.hashalgo;
-const salt = config.encrypt.salt == null ? '1@3$5^7*9)-+' : config.encrypt.salt;
-
 function Crypt() {
     this.algorithm = config.encrypt.algorithm == null ? 'aes-256-ctr' : config.encrypt.algorithm;
     this.privateKey = config.encrypt.key == null ? '1@3$5^7*9)-+' : config.encrypt.key;
@@ -20,14 +15,14 @@ function Crypt() {
 }
 
 Crypt.prototype.encryptText = function (plainText) {
-    var encryptedText = encrypt(plainText);
+    var encryptedText = this.encrypt(plainText);
     var hash = this.hashText(encryptedText);
     return encryptedText + "$" + hash;
 };
 
 Crypt.prototype.hashText = function (text) {
-    var hash = crypto.createHash(hashAlgo).update(salt + text + salt).digest(HEX);
-    log.debug('text = ' + text + ' salt = ' + salt + ' hash = ' + hash);
+    var hash = crypto.createHash(this.hashAlgo).update(this.salt + text + this.salt).digest(HEX);
+    log.debug('text = ' + text + ' salt = ' + this.salt + ' hash = ' + hash);
     return hash;
 };
 
@@ -37,20 +32,20 @@ Crypt.prototype.decryptText = function (encryptedText) {
     var hash = encryptedAndHashArray[1];
     var hash2Compare = this.hashText(encrypted);
     if (hash === hash2Compare) {
-        return decrypt(encrypted);
+        return this.decrypt(encrypted);
     }
 };
 
-function decrypt(text) {
-    const decipher = crypto.createDecipher(algorithm, privateKey);
+Crypt.prototype.decrypt = function (text) {
+    const decipher = crypto.createDecipher(this.algorithm, this.privateKey);
     var dec = decipher.update(text, HEX, UTF8);
     dec += decipher.final(UTF8);
     log.debug('text = ' + text + ' decrypt = ' + dec);
     return dec;
 }
 
-function encrypt(text) {
-    const cipher = crypto.createCipher(algorithm, privateKey);
+Crypt.prototype.encrypt = function (text) {
+    const cipher = crypto.createCipher(this.algorithm, this.privateKey);
     var crypted = cipher.update(text, UTF8, HEX);
     crypted += cipher.final(HEX);
     log.debug('text = ' + text + ' crypted = ' + crypted);

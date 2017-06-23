@@ -1,4 +1,3 @@
-const crypt = require('./../../common/encrypt');
 const log = require('./../../log/logger');
 const conf = require('./../../config/config');
 const cluster = require('./../../db/connection');
