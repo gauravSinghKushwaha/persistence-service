@@ -7,6 +7,7 @@ const path = require('path');
 const rfs = require('rotating-file-stream');
 const logDir = config.logs.accesslogdir == null ? __dirname : config.logs.accesslogdir;
 const logFileName = config.logs.accesslogfile == null ? 'access.log' : config.logs.accesslogfile;
+const custFormat = ':remote-addr - :remote-user [:date[clf]] ":method :url HTTP/:http-version" :status :response-time ms :res[content-length] ":referrer" ":user-agent"';
 
 log.debug('access log =' + logDir);
 fs.existsSync(logDir) || fs.mkdirSync(logDir);
@@ -36,7 +37,7 @@ accessLogStream.on('warning', function (err) {
  * [exports description]
  * @type {[type]}
  */
-module.exports = morgan('combined', {
+module.exports = morgan(custFormat, {
     stream: accessLogStream
 }, {
     skip: function (req, res) {
