@@ -10,6 +10,7 @@
   "operation": [
     "GET",
     "PUT",
+    "DELETE",
     "POST"
   ],
   "cached": {

@@ -171,7 +171,6 @@ post = function (req, res) {
                     addToCache(createKey(req.body.table, value[pk], conf), value, conf, function (err, res) {
                         if (err) {
                             log.error('ERROR : cache add = ' + err);
-                            console.log('ERROR : cache add = ' + err);
                         }
                     });
                     /*added to cache*/
@@ -210,10 +209,8 @@ put = function (req, res) {
                     /*remove from cache*/
                     removeFromCache(createKey(table, id, conf), conf, function (err, res) {
                         if (res && res == 1) {
-                            console.log('deleted successfully')
-                            log.debug('deleted successfully')
+                            log.debug('Cache Removed successfully')
                         } else {
-                            console.log('ERROR :: Cache Remove' + err);
                             log.error('ERROR :: Cache Remove' + err);
                         }
                     });
@@ -268,7 +265,6 @@ get = function (req, res) {
     if (table && schema && id && resSchema) {
         getCachedValue(createKey(table, id, conf), conf, function (err, result) {
             if (result) {
-                console.log('get :: cache result = ' + result);
                 return res.status(200).send(result);
             } else {
                 cluster.execute(cluster.READ, function (err, connection) {
@@ -292,7 +288,6 @@ get = function (req, res) {
                             addToCache(createKey(table, id, conf), results, conf, function (err, res) {
                                 if (err) {
                                     log.error('ERROR : cache add = ' + err);
-                                    console.log('ERROR : cache add = ' + err);
                                 }
                             });
                             /*added to cache*/
@@ -380,12 +375,9 @@ postDel = function (req, res) {
                     var ids = Array.from(new Set(delIds.map(function (item) {
                         return createKey(table, item[conf.key], conf);
                     }))).join(SPACE).trim();
-                    console.log(ids);
                     removeFromCache(ids.trim(), conf, function (err, res) {
-                        console.log(res);
-                        console.log(err);
                         if (res && res == 1) {
-                            log.debug('deleted successfully')
+                            log.debug('Cache Removed successfully. ids = ' + ids)
                         } else {
                             log.error('ERROR :: Cache Remove' + err);
                         }
@@ -431,12 +423,9 @@ getAndDelete = function (req, res) {
                         var ids = Array.from(new Set(delIds.map(function (item) {
                             return createKey(table, item[conf.key], conf);
                         }))).join(SPACE).trim();
-                        console.log(ids);
                         removeFromCache(ids.trim(), conf, function (err, res) {
-                            console.log(res);
-                            console.log(err);
                             if (res && res == 1) {
-                                log.debug('deleted successfully')
+                                log.debug('Cache Removed successfully. ids = ' + ids);
                             } else {
                                 log.error('ERROR :: Cache Remove' + err);
                             }
@@ -497,7 +486,6 @@ putIfPresent = function (req, res) {
                                 addToCache(createKey(req.body.table, value[pk], conf), value, conf, function (err, res) {
                                     if (err) {
                                         log.error('ERROR : cache add = ' + err);
-                                        console.log('ERROR : cache add = ' + err);
                                     }
                                 });
                             }
@@ -508,10 +496,8 @@ putIfPresent = function (req, res) {
                         /*remove from cache*/
                         removeFromCache(createKey(table, id, conf), conf, function (err, res) {
                             if (res && res == 1) {
-                                console.log('deleted successfully')
-                                log.debug('deleted successfully')
+                                log.debug('Cache Removed successfully');
                             } else {
-                                console.log('ERROR :: Cache Remove' + err);
                                 log.error('ERROR :: Cache Remove' + err);
                             }
                         });

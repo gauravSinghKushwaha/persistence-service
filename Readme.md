@@ -14,6 +14,11 @@ This is a NodeJs based REST module. Which can be used as a generic resource serv
 8) Encrypts sensitive information like email,phone-number. Default algo - aes-256-ctr, could be configured using properties file /src/config/properties/dev.properties.
    Fields requiring encryption could be declared in resource conf file located in folder ./src/config/resources/{resource}-conf.json.
    [Folder can be put ANYWHERE ,Folder Can be named ANYTHING]
+9) The project uses redis for caching. {{res}}-conf.json is used for setting cache properties for resource. Redis connection settings can be set in dev.properties under redis.
+   a) CREATE sets data in cache. Get tries and read from cache first, if not there it read from DB and sets in Cache for next call.
+   b) UPDATE and DELETE invalidates cache entries.
+   c) NO CACHE for POST SEARCH. so use that API JUDICIOUSLY
+   
 
 RUNNING SERVER
 
@@ -46,7 +51,6 @@ Postman-Token: f4af6d3e-d1ce-49ef-8263-ae3035944c54
 {
   "schema":"river",
   "table":"user",
-  "cached":true,
   "attr":{
     "username":"meuser21",
     "display_name":"displayme22",
@@ -77,7 +81,6 @@ Postman-Token: 7b608aad-6972-1f01-3abd-810385f3822e
 {
   "schema":"river",
   "table":"user",
-  "cached":true,
   "attr":{
     "username":"c6hor",
     "display_name":"kahin6ka",
@@ -210,6 +213,3 @@ Postman-Token: 4fc39a84-1eec-85d1-607b-cf2f2bf07a3e
   }
 }
 
-Parkings :
-
-1) Introduce caching...
