@@ -11,16 +11,19 @@ function redisCache() {
     const attempts = this.retry.attempt;
 
     this.con.retry_strategy = function (options) {
+
+        // End reconnecting on a specific error and flush all commands with a individual error
         if (options.error && options.error.code === 'ECONNREFUSED') {
-            // End reconnecting on a specific error and flush all commands with a individual error
             return new Error('The server refused the connection');
         }
+
+        // End reconnecting after a specific timeout and flush all commands with a individual error
         if (options.total_retry_time > retryTime) {
-            // End reconnecting after a specific timeout and flush all commands with a individual error
             return new Error('Retry time exhausted');
         }
+
+        // End reconnecting with built in error
         if (options.times_connected > timesConnected) {
-            // End reconnecting with built in error
             return undefined;
         }
         log.info('trying to reconnect with redis');
@@ -58,59 +61,79 @@ function redisCache() {
     });
 }
 
+function isConnected(rc) {
+    console.log('rc.connnected = ' + rc.connected);
+    return rc && rc.connected == true;
+}
+
 function isLegitArr(obj) {
     return obj && null != obj && util.isArray(obj);
 }
 
 redisCache.prototype.add = function (key, value, expiry, cb) {
     try {
-        var cl = this.redisClient;
-        this.get(key, function (err, obj) {
-            var val = [];
-            if (err) {
-                cb(err);
-                return;
-            } else {
-                // value result of some get..so array
-                if (isLegitArr(value)) {
-                    val = value;
-                } else {//value created fresh
+        const rc = this.redisClient;
+        if (isLegitArr(value)) { // value result of some get..so array
+            setToCache(value, rc);
+        } else {
+            this.get(key, function (err, obj) {
+                var val = [];
+                if (err) {
+                    cb(err);
+                    return;
+                } else {
+                    console.log('existing obj ' + obj);
                     if (isLegitArr(obj)) {
                         val = obj;
                     }
                     val.push(value);
                 }
-
-                cl.set(key, val ? JSON.stringify(val) : val, function (err, res) {
-                    if (err) {
-                        log.error('ERROR :: cache add ' + err + ' key = ' + key + ' val = ' + val);
-                        cb(err);
-                    } else {
-                        cl.expire(key, (expiry && expiry > 0 ? expiry : 86400), function (err) {
-                            if (err) {
-                                log.error('ERROR :: cache add expiry' + err + ' key = ' + key);
-                            }
-                        });
-                        log.debug('cache add :: key = ' + key + ' val = ' + val + ' res = ' + res);
-                        cb(undefined, res);
-                    }
-                });
-            }
-        });
+                setToCache(val, rc);
+            });
+        }
     } catch (e) {
         log.error('REDIS ADD :: ' + e);
         cb(e);
     }
+
+    function setToCache(val, rc) {
+        if (!isConnected(rc)) {
+            cb(new Error('Redis connection is broken'));
+            return;
+        }
+        console.log('redis add :: key = ' + key + ' val = ' + JSON.stringify(val) + ' expiry = ' + expiry);
+        rc.set(key, JSON.stringify(val), function (err, res) {
+            if (err) {
+                log.error('ERROR :: cache add ' + err + ' key = ' + key + ' val = ' + val);
+                console.log('ERROR :: cache add ' + err + ' key = ' + key + ' val = ' + val);
+                cb(err);
+            } else {
+                rc.expire(key, (expiry && expiry > 0 ? expiry : 86400), function (err) {
+                    if (err) {
+                        log.error('ERROR :: cache add expiry' + err + ' key = ' + key);
+                    }
+                });
+                log.debug('cache add :: key = ' + key + ' val = ' + val + ' res = ' + res);
+                cb(undefined, res);
+            }
+        });
+    }
 };
 
 redisCache.prototype.get = function (key, cb) {
+    console.log('redis get :: key = ' + key);
     try {
+        if (!isConnected(this.redisClient)) {
+            cb(new Error('Redis connection is broken'));
+            return;
+        }
         this.redisClient.get(key, function (error, result) {
             if (error) {
                 cb(error);
             } else {
-                log.debug('get key = ' + key + ' result = ' + result);
-                cb(undefined, result ? JSON.parse(result) : result);
+                log.debug('redis get :: key = ' + key + ' result = ' + result);
+                console.log('redis get :: key = ' + key + ' result = ' + result);
+                cb(undefined, result ? JSON.parse(result) : undefined);
             }
         });
     } catch (e) {
@@ -121,11 +144,16 @@ redisCache.prototype.get = function (key, cb) {
 
 redisCache.prototype.del = function (key, cb) {
     try {
+        if (!isConnected(this.redisClient)) {
+            cb(new Error('Redis connection is broken'));
+            return;
+        }
         this.redisClient.del(key, function (error, response) {
             if (error) {
                 cb(error);
             } else {
-                log.debug('del keys = ' + key + ' response = ' + response);
+                log.debug('redis del :: keys = ' + key + ' response = ' + response);
+                console.log('redis del :: keys = ' + key + ' response = ' + response);
                 cb(undefined, response ? JSON.parse(response) : response);
             }
         });
@@ -135,5 +163,26 @@ redisCache.prototype.del = function (key, cb) {
     }
 };
 
+
+redisCache.prototype.exists = function (key, cb) {
+    try {
+        if (!isConnected(this.redisClient)) {
+            cb(new Error('Redis connection is broken'));
+            return;
+        }
+        this.redisClient.exists(key, function (err, reply) {
+            if (!err) {
+                log.debug('Key = ' + key + ( reply == 1 ? '' : ' does not ') + ' exists');
+                console.log('Redis exists ::  Key = ' + key + ( reply == 1 ? '' : ' does not ') + ' exists');
+                cb(undefined, reply);
+            } else {
+                cb(err);
+            }
+        });
+    } catch (e) {
+        log.error('REDIS exists :: ' + e);
+        cb(e);
+    }
+};
 
 module.exports = new redisCache();

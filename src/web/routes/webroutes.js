@@ -11,15 +11,16 @@ const express = require('express');
  * IF you update , check https://github.com/mysqljs/mysql for better query building and connection usages
  */
 
-function releaseConnection(connection) {
-    if (connection) connection.release();
-}
 const auth = require('basic-auth');
 const router = express.Router();
 const config = conf.config;
 const AT = '@';
 const COLON = ':';
 const SPACE = ' ';
+
+function releaseConnection(connection) {
+    if (connection) connection.release();
+}
 
 /**
  * Middleware would be used for authentication
