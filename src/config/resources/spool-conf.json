@@ -8,7 +8,7 @@
     "dates is list of columns with value as date/time. "
   ],
   "cached": {
-    "allowed": false
+    "allowed": true
   },
   "operation": [
     "GET",

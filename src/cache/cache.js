@@ -1,3 +1,4 @@
+const util = require('util');
 const conf = require('./../config/config').config;
 const log = require('./../log/logger');
 const redis = require("redis");
@@ -28,6 +29,7 @@ function redisCache() {
     };
 
     this.redisClient = redis.createClient(this.con);
+    //this.redisClient.unref();
 
     this.redisClient.on('ready', function () {
         log.info("Redis is ready");
@@ -56,29 +58,82 @@ function redisCache() {
     });
 }
 
-redisCache.prototype.addToCache = function (body, results, resConf, callBack) {
-    // auto-generated pk
-
-    if(conf.pk && autoid){
-        const key = body.table+results.insertId;
-    } else{
-        //key may have multiple values.
-        // if already there  add to list else wrap object in list add
-    }
-
-    if(results.insertId > 0){
-        const key = body.table+results.insertId
-    }else if(results.affectedRows >0) {
-
-    }
-    cache.redisClient.set("language", "nodejs", function (err, reply) {
-        if (err) {
-            console.log(err);
-            callBack(err);
-        }
-        callBack(null, reply);
-        console.log(reply);
-    });
+function isLegitArr(obj) {
+    return obj && null != obj && util.isArray(obj);
 }
+
+redisCache.prototype.add = function (key, value, expiry, cb) {
+    try {
+        var cl = this.redisClient;
+        this.get(key, function (err, obj) {
+            var val = [];
+            if (err) {
+                cb(err);
+                return;
+            } else {
+                // value result of some get..so array
+                if (isLegitArr(value)) {
+                    val = value;
+                } else {//value created fresh
+                    if (isLegitArr(obj)) {
+                        val = obj;
+                    }
+                    val.push(value);
+                }
+
+                cl.set(key, val ? JSON.stringify(val) : val, function (err, res) {
+                    if (err) {
+                        log.error('ERROR :: cache add ' + err + ' key = ' + key + ' val = ' + val);
+                        cb(err);
+                    } else {
+                        cl.expire(key, (expiry && expiry > 0 ? expiry : 86400), function (err) {
+                            if (err) {
+                                log.error('ERROR :: cache add expiry' + err + ' key = ' + key);
+                            }
+                        });
+                        log.debug('cache add :: key = ' + key + ' val = ' + val + ' res = ' + res);
+                        cb(undefined, res);
+                    }
+                });
+            }
+        });
+    } catch (e) {
+        log.error('REDIS ADD :: ' + e);
+        cb(e);
+    }
+};
+
+redisCache.prototype.get = function (key, cb) {
+    try {
+        this.redisClient.get(key, function (error, result) {
+            if (error) {
+                cb(error);
+            } else {
+                log.debug('get key = ' + key + ' result = ' + result);
+                cb(undefined, result ? JSON.parse(result) : result);
+            }
+        });
+    } catch (e) {
+        log.error('REDIS GET :: ' + e);
+        cb(e);
+    }
+};
+
+redisCache.prototype.del = function (key, cb) {
+    try {
+        this.redisClient.del(key, function (error, response) {
+            if (error) {
+                cb(error);
+            } else {
+                log.debug('del keys = ' + key + ' response = ' + response);
+                cb(undefined, response ? JSON.parse(response) : response);
+            }
+        });
+    } catch (e) {
+        log.error('REDIS DEL :: ' + e);
+        cb(e);
+    }
+};
+
 
 module.exports = new redisCache();

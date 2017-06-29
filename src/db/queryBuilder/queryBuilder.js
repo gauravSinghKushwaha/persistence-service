@@ -4,6 +4,7 @@ const crypt = require('./../../common/encrypt');
 
 const DOT = ".";
 const SPACE = " ";
+const SEMICOLON = ';';
 /**
  * Query builder ; IF you update , check https://github.com/mysqljs/mysql for building effective and better queries
  * @param req
@@ -255,7 +256,7 @@ query.prototype.getanddelete = function (table, schema, id) {
 
     return {
         "query": {
-            sql: getQuery.query.sql + ';' + deleteQuery.query.sql,
+            sql: getQuery.query.sql + SEMICOLON + deleteQuery.query.sql,
             nestTables: conf.query && conf.query.nesttables ? conf.query.nesttables : false,
             timeout: conf.query && conf.query.timeout ? conf.query.timeout : 60000
         },
@@ -275,20 +276,23 @@ query.prototype.deleteQuery = function () {
 
     const validateInput = validateFields('Where', conf.deleteconf.where, Object.keys(where));
     log.debug('Search validation =' + validateInput + '\nwhere= ' + JSON.stringify(where));
-    var queryStr = 'DELETE ' + SPACE + 'FROM' + SPACE + this.dbSchema + DOT + this.dbTable + SPACE + 'WHERE' + SPACE;
+    const DELETE = 'DELETE';
+    const SELECT = 'SELECT' + SPACE + this.conf.key.toString();
+    var deleteQuery = DELETE + SPACE + 'FROM' + SPACE + this.dbSchema + DOT + this.dbTable + SPACE + 'WHERE' + SPACE;
     const keys = Object.keys(where);
-    queryStr = queryStr + keys.join(' = ? AND ') + ' = ? ' + SPACE;
+    deleteQuery = deleteQuery + keys.join(' = ? AND ') + ' = ? ' + SPACE;
     keys.forEach(function (k) {
         values.push(getEncryptedValue(conf, k.toString(), where[k], true));
     });
 
+    const selectIds = deleteQuery.replace(DELETE, SELECT);
     return {
         "query": {
-            sql: queryStr,
+            sql: selectIds + SEMICOLON + deleteQuery,
             nestTables: conf.query && conf.query.nesttables ? conf.query.nesttables : false,
             timeout: conf.query && conf.query.timeout ? conf.query.timeout : 60000
         },
-        "values": values
+        "values": [values, values]
     };
 }
 

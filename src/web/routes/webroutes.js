@@ -5,15 +5,21 @@ const cache = require('./../../cache/cache');
 const jsonValidator = require('./../../common/jsonInputValidation');
 const QueryBuilder = require('./../../db/queryBuilder/queryBuilder');
 const express = require('express');
-const auth = require('basic-auth');
-const router = express.Router();
-const config = conf.config;
-
 /**
  * Calling querybuilder to build queries and executing here....
  *
  * IF you update , check https://github.com/mysqljs/mysql for better query building and connection usages
  */
+
+function releaseConnection(connection) {
+    if (connection) connection.release();
+}
+const auth = require('basic-auth');
+const router = express.Router();
+const config = conf.config;
+const AT = '@';
+const COLON = ':';
+const SPACE = ' ';
 
 /**
  * Middleware would be used for authentication
@@ -69,17 +75,69 @@ router.use(function timeLog(req, res, next) {
     next();
 });
 
-function releaseConnection(connection) {
-    if (connection) connection.release();
+function createKey(table, pkValue, conf) {
+    return (conf.cached.prefix ? conf.cached.prefix : table) + COLON + (conf.cached.version ? conf.cached.version : 1) + AT + pkValue;
 }
 
-function addToCache(req, results) {
-    cache.addToCache(req.body, results, jsonValidator.getConf(req.body.table), function (err, result) {
-        if (err) {
-            log.error('error adding to cache' + err);
-        }
-        log.debug(result);
-    });
+/**
+ * add create/POST to cache
+ * @param key
+ * @param value
+ */
+function addToCache(key, value, conf, cb) {
+    if (isCached(conf)) {
+        cache.add(key, value, conf.cached.expiry, function (err, result) {
+            if (err) {
+                cb(err);
+            } else {
+                cb(undefined, result);
+            }
+        });
+    } else {
+        cb(new Error('{"error" : "Cache no enabled for this resource."}'));
+    }
+}
+
+/**
+ * returns object for key
+ * @param key
+ */
+function getCachedValue(key, conf, cb) {
+    if (isCached(conf)) {
+        cache.get(key, function (err, result) {
+            if (err) {
+                cb(err);
+            } else {
+                cb(undefined, result)
+            }
+        });
+    } else {
+        cb(new Error('{"error" : "Cache no enabled for this resource."}'));
+    }
+}
+
+/**
+ * removes from cache
+ * @param key
+ * @param conf
+ * @param cb
+ */
+function removeFromCache(key, conf, cb) {
+    if (isCached(conf)) {
+        cache.del(key, function (err, response) {
+            if (response) {
+                cb(undefined, response);
+            } else {
+                cb(err);
+            }
+        })
+    } else {
+        cb(new Error('{"error" : "Cache no enabled for this resource."}'));
+    }
+}
+
+function isCached(conf) {
+    return conf && conf.cached && conf.cached.allowed && conf.cached.allowed == true;
 }
 
 post = function (req, res) {
@@ -89,17 +147,35 @@ post = function (req, res) {
             return res.status(500).send(('{"error" : "' + err.toString() + '"}'));
         }
         try {
-            qb = new QueryBuilder(req, jsonValidator.getSchema(req.body.table), jsonValidator.getConf(req.body.table));
+            const conf = jsonValidator.getConf(req.body.table);
+            qb = new QueryBuilder(req, jsonValidator.getSchema(req.body.table), conf);
             q = qb.insertQuery();
             log.debug(q);
+
             connection.query(q.query, q.values, function (err, results, fields) {
                 releaseConnection(connection);
                 if (err) {
                     log.error(err);
                     return res.status(500).send(('{"error" : "' + err.toString() + '"}'));
                 }
-                log.debug('results = ' + JSON.stringify(results) + '\t\tfields = ' + JSON.stringify(fields));
-                //addToCache(req, results);
+                /*add to cache*/
+                if (isCached(conf)) {
+                    const pk = conf.key.toString();
+                    const value = req.body.attr;
+                    // auto-generated
+                    if (results && results.insertId > 0 && conf.auto.indexOf(pk) > -1) {
+                        value[pk] = results.insertId;
+                    } else if (req.params.id && Object.keys(req.params.id).length > 0) { // in URL
+                        value[pk] = req.params.id;
+                    }
+                    addToCache(createKey(req.body.table, value[pk], conf), value, conf, function (err, res) {
+                        if (err) {
+                            log.error('ERROR : cache add = ' + err);
+                            console.log('ERROR : cache add = ' + err);
+                        }
+                    });
+                    /*added to cache*/
+                }
                 return res.status(201).send('{"insertId" : ' + results.insertId + ', "changedRows" : ' + results.changedRows + ' , "affectedRows" : ' + results.affectedRows + '}');
             });
         } catch (err) {
@@ -119,8 +195,9 @@ put = function (req, res) {
                 return res.status(500).send(('{"error" : "' + err.toString() + '"}'));
             }
             try {
-                const schema = jsonValidator.getSchema(req.body.table);
-                const conf = jsonValidator.getConf(req.body.table);
+                const table = req.body.table;
+                const schema = jsonValidator.getSchema(table);
+                const conf = jsonValidator.getConf(table);
                 qb = new QueryBuilder(req, schema, conf);
                 q = qb.updateQuery();
                 log.debug(q);
@@ -130,7 +207,17 @@ put = function (req, res) {
                         log.error(err);
                         return res.status(500).send(('{"error" : "' + err.toString() + '"}'));
                     }
-                    log.debug('results = ' + JSON.stringify(results) + '\t\tfields = ' + JSON.stringify(fields));
+                    /*remove from cache*/
+                    removeFromCache(createKey(table, id, conf), conf, function (err, res) {
+                        if (res && res == 1) {
+                            console.log('deleted successfully')
+                            log.debug('deleted successfully')
+                        } else {
+                            console.log('ERROR :: Cache Remove' + err);
+                            log.error('ERROR :: Cache Remove' + err);
+                        }
+                    });
+                    /*removed from cache*/
                     return res.status(200).send('{"affectedRows" : ' + results.affectedRows + ', "changedRows" : ' + results.changedRows + '}');
                 });
             } catch (err) {
@@ -141,10 +228,9 @@ put = function (req, res) {
         });
     }
     else {
-        return res.status(400).send('id is missing.');
+        return res.status(400).send('{"error" : "' + 'id is missing."}');
     }
 };
-
 
 postSearch = function (req, res) {
     cluster.execute(cluster.READ, function (err, connection) {
@@ -162,7 +248,6 @@ postSearch = function (req, res) {
                     log.error(err);
                     return res.status(500).send(('{"error" : "' + err.toString() + '"}'));
                 }
-                log.debug('results = ' + JSON.stringify(results) + '\t\tfields = ' + JSON.stringify(fields));
                 qb.decryptValues(results);
                 return res.status(200).send(results);
             });
@@ -178,36 +263,54 @@ get = function (req, res) {
     const table = req.query.table;
     const schema = req.query.schema;
     const id = req.params.id;
-    if (table && schema && id && jsonValidator.getSchema(table)) {
-        cluster.execute(cluster.READ, function (err, connection) {
-            if (err) {
-                log.error(err);
-                return res.status(500).send(('{"error" : "' + err.toString() + '"}'));
-            }
-            try {
-                qb = new QueryBuilder(req, jsonValidator.getSchema(table), jsonValidator.getConf(table));
-                q = qb.findById(table, schema, id);
-                log.debug(q);
-                connection.query(q.query, q.values, function (err, results, fields) {
-                    releaseConnection(connection);
+    const resSchema = jsonValidator.getSchema(table);
+    const conf = jsonValidator.getConf(table);
+    if (table && schema && id && resSchema) {
+        getCachedValue(createKey(table, id, conf), conf, function (err, result) {
+            if (result) {
+                console.log('get :: cache result = ' + result);
+                return res.status(200).send(result);
+            } else {
+                cluster.execute(cluster.READ, function (err, connection) {
                     if (err) {
                         log.error(err);
                         return res.status(500).send(('{"error" : "' + err.toString() + '"}'));
                     }
-                    log.debug('results = ' + JSON.stringify(results) + '\t\tfields = ' + JSON.stringify(fields));
-                    qb.decryptValues(results);
-                    return res.status(200).send(results);
+                    try {
+                        qb = new QueryBuilder(req, resSchema, conf);
+                        q = qb.findById(table, schema, id);
+                        log.debug(q);
+                        connection.query(q.query, q.values, function (err, results, fields) {
+                            releaseConnection(connection);
+                            if (err) {
+                                log.error(err);
+                                return res.status(500).send(('{"error" : "' + err.toString() + '"}'));
+                            }
+                            log.debug('results = ' + results.length + '\t\tfields = ' + fields);
+                            qb.decryptValues(results);
+                            /*add to cache*/
+                            addToCache(createKey(table, id, conf), results, conf, function (err, res) {
+                                if (err) {
+                                    log.error('ERROR : cache add = ' + err);
+                                    console.log('ERROR : cache add = ' + err);
+                                }
+                            });
+                            /*added to cache*/
+                            return res.status(200).send(results);
+                        });
+                    } catch (err) {
+                        releaseConnection(connection);
+                        log.error(err);
+                        return res.status(err.id ? err.id : 500).send(('{"error" : "' + err.toString() + '"}'));
+                    }
                 });
-            } catch (err) {
-                releaseConnection(connection);
-                log.error(err);
-                return res.status(err.id ? err.id : 500).send(('{"error" : "' + err.toString() + '"}'));
             }
         });
     } else {
-        return res.status(400).send('Wrong request, Either table, schema , id is missing.');
+        return res.status(400).send('{"error" : "' + 'Wrong request, Either table, schema , id is missing."}');
     }
 };
+
 
 del = function (req, res) {
     const table = req.query.table;
@@ -220,7 +323,8 @@ del = function (req, res) {
                 return res.status(500).send(('{"error" : "' + err.toString() + '"}'));
             }
             try {
-                qb = new QueryBuilder(req, jsonValidator.getSchema(table), jsonValidator.getConf(table));
+                const conf = jsonValidator.getConf(table);
+                qb = new QueryBuilder(req, jsonValidator.getSchema(table), conf);
                 q = qb.deleteById(table, schema, id);
                 log.debug(q);
                 connection.query(q.query, q.values, function (err, results, fields) {
@@ -229,7 +333,15 @@ del = function (req, res) {
                         log.error(err);
                         return res.status(500).send(('{"error" : "' + err.toString() + '"}'));
                     }
-                    log.debug('results = ' + JSON.stringify(results) + '\t\tfields = ' + JSON.stringify(fields));
+                    /*remove from cache*/
+                    removeFromCache(createKey(table, id, conf), conf, function (err, res) {
+                        if (res && res == 1) {
+                            log.debug('deleted successfully')
+                        } else {
+                            log.error('ERROR :: Cache Remove' + err);
+                        }
+                    });
+                    /*removed from cache*/
                     return res.status(200).send('{"deleted" : "' + results.affectedRows + '"}');
                 });
             } catch (err) {
@@ -239,7 +351,7 @@ del = function (req, res) {
             }
         });
     } else {
-        return res.status(400).send('Wrong request, Either table, schema , id is missing.');
+        return res.status(400).send('{"error" : "' + 'Wrong request, Either table, schema , id is missing."}');
     }
 };
 
@@ -250,7 +362,9 @@ postDel = function (req, res) {
             return res.status(500).send(('{"error" : "' + err.toString() + '"}'));
         }
         try {
-            qb = new QueryBuilder(req, jsonValidator.getSchema(req.body.operation), jsonValidator.getConf(req.body.table));
+            const table = req.body.table;
+            const conf = jsonValidator.getConf(table);
+            qb = new QueryBuilder(req, jsonValidator.getSchema(req.body.operation), conf);
             q = qb.deleteQuery();
             log.debug(q);
             connection.query(q.query, q.values, function (err, results, fields) {
@@ -259,8 +373,27 @@ postDel = function (req, res) {
                     log.error(err);
                     return res.status(500).send(('{"error" : "' + err.toString() + '"}'));
                 }
-                log.debug('results = ' + JSON.stringify(results) + '\t\tfields = ' + JSON.stringify(fields));
-                return res.status(200).send('{"deleted" : "' + results.affectedRows + '"}');
+
+                /*removing from cache*/
+                const delIds = results[0];
+                if (results && delIds && delIds.length > 0) {
+                    var ids = Array.from(new Set(delIds.map(function (item) {
+                        return createKey(table, item[conf.key], conf);
+                    }))).join(SPACE).trim();
+                    console.log(ids);
+                    removeFromCache(ids.trim(), conf, function (err, res) {
+                        console.log(res);
+                        console.log(err);
+                        if (res && res == 1) {
+                            log.debug('deleted successfully')
+                        } else {
+                            log.error('ERROR :: Cache Remove' + err);
+                        }
+                    });
+                }
+                /*removed from cache*/
+
+                return res.status(200).send('{"deleted" : "' + results[1].affectedRows + '"}');
             });
         } catch (err) {
             releaseConnection(connection);
@@ -281,7 +414,8 @@ getAndDelete = function (req, res) {
                 return res.status(500).send(('{"error" : "' + err.toString() + '"}'));
             }
             try {
-                qb = new QueryBuilder(req, jsonValidator.getSchema(table), jsonValidator.getConf(table));
+                const conf = jsonValidator.getConf(table);
+                qb = new QueryBuilder(req, jsonValidator.getSchema(table), conf);
                 q = qb.getanddelete(table, schema, id);
                 log.debug(q);
                 connection.query(q.query, q.values, function (err, results, fields) {
@@ -290,8 +424,25 @@ getAndDelete = function (req, res) {
                         log.error(err);
                         return res.status(500).send(('{"error" : "' + err.toString() + '"}'));
                     }
-                    log.debug('results = ' + JSON.stringify(results) + '\t\tfields = ' + JSON.stringify(fields));
                     qb.decryptValues(results[0]);
+                    /*removing from cache*/
+                    const delIds = results[0];
+                    if (results && delIds && delIds.length > 0) {
+                        var ids = Array.from(new Set(delIds.map(function (item) {
+                            return createKey(table, item[conf.key], conf);
+                        }))).join(SPACE).trim();
+                        console.log(ids);
+                        removeFromCache(ids.trim(), conf, function (err, res) {
+                            console.log(res);
+                            console.log(err);
+                            if (res && res == 1) {
+                                log.debug('deleted successfully')
+                            } else {
+                                log.error('ERROR :: Cache Remove' + err);
+                            }
+                        });
+                    }
+                    /*removed from cache*/
                     return res.status(200).send(results[0]);
                 });
             } catch (err) {
@@ -301,7 +452,7 @@ getAndDelete = function (req, res) {
             }
         });
     } else {
-        return res.status(400).send('Wrong request, Either table, schema , id is missing.');
+        return res.status(400).send('{"error" : "' + 'Wrong request, Either table, schema , id is missing."}');
     }
 };
 
@@ -314,28 +465,57 @@ putIfPresent = function (req, res) {
                 return res.status(500).send(('{"error" : "' + err.toString() + '"}'));
             }
             try {
-                qb = new QueryBuilder(req, jsonValidator.getSchema(req.body.table), jsonValidator.getConf(req.body.table));
+                const table = req.body.table;
+                const conf = jsonValidator.getConf(table);
+                qb = new QueryBuilder(req, jsonValidator.getSchema(table), conf);
                 q = qb.updateQuery();
                 log.debug(q);
-                connection.query(q.query, q.values, function (err, results, fields) {
+                connection.query(q.query, q.values, function (err, results, fields) { //update
                     if (err) {
                         log.error(err);
                         return res.status(500).send(('{"error" : "' + err.toString() + '"}'));
                     }
-                    log.debug('update results = ' + JSON.stringify(results) + '\t\tfields = ' + JSON.stringify(fields));
                     if (results.changedRows <= 0 && results.affectedRows <= 0) {
                         q = qb.insertQuery();
                         log.debug(q);
-                        connection.query(q.query, q.values, function (err, results, fields) {
+                        connection.query(q.query, q.values, function (err, results, fields) { // insert
                             releaseConnection(connection);
                             if (err) {
                                 log.error(err);
                                 return res.status(500).send(('{"error" : "' + err.toString() + '"}'));
                             }
-                            log.debug('results = ' + JSON.stringify(results) + '\t\tfields = ' + JSON.stringify(fields));
+                            /*add to cache*/
+                            if (isCached(conf)) {
+                                const pk = conf.key.toString();
+                                const value = req.body.attr;
+                                // auto-generated
+                                if (results && results.insertId > 0 && conf.auto.indexOf(pk) > -1) {
+                                    value[pk] = results.insertId;
+                                } else if (req.params.id && Object.keys(req.params.id).length > 0) { // in URL
+                                    value[pk] = req.params.id;
+                                }
+                                addToCache(createKey(req.body.table, value[pk], conf), value, conf, function (err, res) {
+                                    if (err) {
+                                        log.error('ERROR : cache add = ' + err);
+                                        console.log('ERROR : cache add = ' + err);
+                                    }
+                                });
+                            }
+                            /*added to cache*/
                             return res.status(201).send('{"insertId" : ' + results.insertId + ', "changedRows" : ' + results.changedRows + ' , "affectedRows" : ' + results.affectedRows + '}');
                         });
                     } else {
+                        /*remove from cache*/
+                        removeFromCache(createKey(table, id, conf), conf, function (err, res) {
+                            if (res && res == 1) {
+                                console.log('deleted successfully')
+                                log.debug('deleted successfully')
+                            } else {
+                                console.log('ERROR :: Cache Remove' + err);
+                                log.error('ERROR :: Cache Remove' + err);
+                            }
+                        });
+                        /*removed from cache*/
                         return res.status(201).send('{"affectedRows" : ' + results.affectedRows + ', "changedRows" : ' + results.changedRows + '}');
                     }
                 });
@@ -347,56 +527,101 @@ putIfPresent = function (req, res) {
         });
     }
     else {
-        return res.status(400).send('id is missing.');
+        return res.status(400).send('{"error" : "' + 'id is missing."}');
     }
 };
 
 /*CREATE*/
 router.route('/resources').post(function (req, res) {
-    post(req, res);
+    try {
+        post(req, res);
+    } catch (err) {
+        log.error(err);
+        return res.status(err.id ? err.id : 500).send(('{"error" : "' + err.toString() + '"}'));
+    }
 });
 
 
 /*CREATE*/
 router.route('/resources/:id').post(function (req, res) {
-    post(req, res);
+    try {
+        post(req, res);
+    } catch (err) {
+        log.error(err);
+        return res.status(err.id ? err.id : 500).send(('{"error" : "' + err.toString() + '"}'));
+    }
 });
 
 /*UPDATE*/
 router.route('/resources/:id').put(function (req, res) {
-    put(req, res);
+    try {
+        put(req, res);
+    } catch (err) {
+        log.error(err);
+        return res.status(err.id ? err.id : 500).send(('{"error" : "' + err.toString() + '"}'));
+    }
 });
 
 /**
  * GET
  */
 router.route('/resources/:id').get(function (req, res) {
-    get(req, res);
+    try {
+        get(req, res);
+    } catch (err) {
+        log.error(err);
+        return res.status(err.id ? err.id : 500).send(('{"error" : "' + err.toString() + '"}'));
+    }
 });
 
 /**
  * DELETE
  */
 router.route('/resources/:id').delete(function (req, res) {
-    del(req, res);
+    try {
+        del(req, res);
+    } catch (err) {
+        log.error(err);
+        return res.status(err.id ? err.id : 500).send(('{"error" : "' + err.toString() + '"}'));
+    }
 });
 
-/*POST SEARCH*/
+/**
+ * POST SEARCH
+ *
+ * NOT CACHED FOR ANY RESOURCE...USE IT JUDICIOUSLY
+ *
+ * */
 router.route('/search').post(function (req, res) {
-    postSearch(req, res);
+    try {
+        postSearch(req, res);
+    } catch (err) {
+        log.error(err);
+        return res.status(err.id ? err.id : 500).send(('{"error" : "' + err.toString() + '"}'));
+    }
 });
 
 
 /* CONDITIONAL DELETE*/
 router.route('/delete').delete(function (req, res) {
-    postDel(req, res);
+    try {
+        postDel(req, res);
+    } catch (err) {
+        log.error(err);
+        return res.status(err.id ? err.id : 500).send(('{"error" : "' + err.toString() + '"}'));
+    }
 });
 
 /**
  * get and DELETE the same
  */
 router.route('/getanddelete/resources/:id').delete(function (req, res) {
-    getAndDelete(req, res);
+    try {
+        getAndDelete(req, res);
+    } catch (err) {
+        log.error(err);
+        return res.status(err.id ? err.id : 500).send(('{"error" : "' + err.toString() + '"}'));
+    }
 });
 
 /**
@@ -405,7 +630,12 @@ router.route('/getanddelete/resources/:id').delete(function (req, res) {
 /*UPDATE*/
 
 router.route('/putifpresent/resources/:id').put(function (req, res) {
-    putIfPresent(req, res);
+    try {
+        putIfPresent(req, res);
+    } catch (err) {
+        log.error(err);
+        return res.status(err.id ? err.id : 500).send(('{"error" : "' + err.toString() + '"}'));
+    }
 });
 
 

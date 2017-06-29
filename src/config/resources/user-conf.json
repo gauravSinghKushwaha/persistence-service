@@ -13,12 +13,12 @@
     "POST"
   ],
   "cached": {
-    "allowed": false,
-    "expiry": 99999,
+    "allowed": true,
+    "expiry": 86400,
     "version":1,
     "prefix":"user"
   },
-  "key": "id",
+  "key": "username",
   "hashed": [
     "password"
   ],
