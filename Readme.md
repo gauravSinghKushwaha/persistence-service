@@ -18,7 +18,7 @@ This is a NodeJs based REST module. Which can be used as a generic resource serv
    a) CREATE sets data in cache. Get tries and read from cache first, if not there it read from DB and sets in Cache for next call.
    b) UPDATE and DELETE invalidates cache entries.
    c) NO CACHE for POST SEARCH. so use that API JUDICIOUSLY
-   
+   d) CACHE negative and empty values as well. e.g. if someone gets for username abc and there is not data in db, the cached value would be '[]' . 
 
 RUNNING SERVER
 

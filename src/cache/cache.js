@@ -62,7 +62,6 @@ function redisCache() {
 }
 
 function isConnected(rc) {
-    console.log('rc.connnected = ' + rc.connected);
     return rc && rc.connected == true;
 }
 
@@ -82,7 +81,6 @@ redisCache.prototype.add = function (key, value, expiry, cb) {
                     cb(err);
                     return;
                 } else {
-                    console.log('existing obj ' + obj);
                     if (isLegitArr(obj)) {
                         val = obj;
                     }
@@ -101,11 +99,9 @@ redisCache.prototype.add = function (key, value, expiry, cb) {
             cb(new Error('Redis connection is broken'));
             return;
         }
-        console.log('redis add :: key = ' + key + ' val = ' + JSON.stringify(val) + ' expiry = ' + expiry);
         rc.set(key, JSON.stringify(val), function (err, res) {
             if (err) {
                 log.error('ERROR :: cache add ' + err + ' key = ' + key + ' val = ' + val);
-                console.log('ERROR :: cache add ' + err + ' key = ' + key + ' val = ' + val);
                 cb(err);
             } else {
                 rc.expire(key, (expiry && expiry > 0 ? expiry : 86400), function (err) {
@@ -121,7 +117,6 @@ redisCache.prototype.add = function (key, value, expiry, cb) {
 };
 
 redisCache.prototype.get = function (key, cb) {
-    console.log('redis get :: key = ' + key);
     try {
         if (!isConnected(this.redisClient)) {
             cb(new Error('Redis connection is broken'));
@@ -132,7 +127,6 @@ redisCache.prototype.get = function (key, cb) {
                 cb(error);
             } else {
                 log.debug('redis get :: key = ' + key + ' result = ' + result);
-                console.log('redis get :: key = ' + key + ' result = ' + result);
                 cb(undefined, result ? JSON.parse(result) : undefined);
             }
         });
@@ -153,7 +147,6 @@ redisCache.prototype.del = function (key, cb) {
                 cb(error);
             } else {
                 log.debug('redis del :: keys = ' + key + ' response = ' + response);
-                console.log('redis del :: keys = ' + key + ' response = ' + response);
                 cb(undefined, response ? JSON.parse(response) : response);
             }
         });
@@ -172,8 +165,7 @@ redisCache.prototype.exists = function (key, cb) {
         }
         this.redisClient.exists(key, function (err, reply) {
             if (!err) {
-                log.debug('Key = ' + key + ( reply == 1 ? '' : ' does not ') + ' exists');
-                console.log('Redis exists ::  Key = ' + key + ( reply == 1 ? '' : ' does not ') + ' exists');
+                log.debug('Redis exists ::  Key = ' + key + ( reply == 1 ? '' : ' does not ') + ' exists');
                 cb(undefined, reply);
             } else {
                 cb(err);
