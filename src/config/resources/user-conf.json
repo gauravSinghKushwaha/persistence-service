@@ -10,14 +10,13 @@
   "operation": [
     "GET",
     "PUT",
-    "DELETE",
     "POST"
   ],
   "cached": {
     "allowed": true,
     "expiry": 86400,
-    "version":1,
-    "prefix":"user"
+    "version": 1,
+    "prefix": "user"
   },
   "key": "username",
   "hashed": [
