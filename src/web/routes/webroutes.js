@@ -77,7 +77,9 @@ router.use(function timeLog(req, res, next) {
 });
 
 function createKey(table, pkValue, conf) {
-    return (conf.cached.prefix ? conf.cached.prefix : table) + COLON + (conf.cached.version ? conf.cached.version : 1) + AT + pkValue;
+    const cacheKey = ((config.cache && config.cache.prefix && config.cache.version ) ? (config.cache.prefix + COLON + config.cache.version + AT) : '')
+        + (conf.cached.prefix ? conf.cached.prefix : table) + COLON + (conf.cached.version ? conf.cached.version : 1) + AT + pkValue;
+    return cacheKey;
 }
 
 /**
@@ -95,7 +97,8 @@ function addToCache(key, value, conf, cb) {
             }
         });
     } else {
-        cb(new Error('{"error" : "Cache no enabled for this resource."}'));
+        log.debug('{"info": "Cache no enabled for this resource."}');
+        cb();
     }
 }
 
@@ -113,7 +116,8 @@ function getCachedValue(key, conf, cb) {
             }
         });
     } else {
-        cb(new Error('{"error" : "Cache no enabled for this resource."}'));
+        log.debug('{"info": "Cache no enabled for this resource."}');
+        cb();
     }
 }
 
@@ -133,7 +137,8 @@ function removeFromCache(key, conf, cb) {
             }
         })
     } else {
-        cb(new Error('{"error" : "Cache no enabled for this resource."}'));
+        log.debug('{"info": "Cache no enabled for this resource."}');
+        cb();
     }
 }
 
@@ -268,6 +273,7 @@ get = function (req, res) {
             if (result) {
                 return res.status(200).send(result);
             } else {
+                log.error(err);
                 cluster.execute(cluster.READ, function (err, connection) {
                     if (err) {
                         log.error(err);

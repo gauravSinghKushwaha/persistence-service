@@ -216,14 +216,15 @@ query.prototype.searchQuery = function () {
  */
 query.prototype.findById = function (table, schema, id) {
     const conf = this.conf;
-    return {
+    const q = {
         "query": {
-            sql: 'SELECT ' + SPACE + conf.searchconf.fields.join(',') + SPACE + 'FROM' + SPACE + schema + '.' + table + SPACE + 'WHERE ' + conf.key + ' = ? ',
+            sql: 'SELECT ' + SPACE + conf.searchconf.fields.join(',') + SPACE + 'FROM' + SPACE + schema + '.' + table + SPACE + 'WHERE ' + conf.key + ' = ? ' + ((conf.searchconf && conf.searchconf.orderby && conf.searchconf.orderby.deforder) ? (' ORDER BY' + SPACE + conf.searchconf.orderby.deforder ) : ''),
             nestTables: conf.query && conf.query.nesttables ? conf.query.nesttables : false,
             timeout: conf.query && conf.query.timeout ? conf.query.timeout : 60000
         },
         "values": [id]
     };
+    return q;
 }
 
 /**

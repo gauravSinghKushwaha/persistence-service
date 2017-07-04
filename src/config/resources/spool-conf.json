@@ -43,6 +43,9 @@
     "where": [
       "username"
     ],
+    "orderby": {
+      "deforder": "seq"
+    },
     "resultlimit": "200"
   },
   "deleteconf": {

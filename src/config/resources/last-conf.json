@@ -8,7 +8,10 @@
     "dates is list of columns with value as date/time. "
   ],
   "cached": {
-    "allowed": false
+    "allowed": true,
+    "expiry": 3600000,
+    "version": 1,
+    "prefix": "last"
   },
   "operation": [
     "PUT",
