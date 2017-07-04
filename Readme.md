@@ -1,4 +1,4 @@
-                                    PERSISTENCE SERVER
+                                    **************************************PERSISTENCE SERVER**************************************
 
 This is a NodeJs based REST module. Which can be used as a generic resource server to store information in DB.
 
@@ -20,7 +20,7 @@ This is a NodeJs based REST module. Which can be used as a generic resource serv
    c) NO CACHE for POST SEARCH. so use that API JUDICIOUSLY
    d) CACHE negative and empty values as well. e.g. if someone gets for username abc and there is not data in db, the cached value would be '[]' . 
 
-RUNNING SERVER
+**********RUNNING SERVER**********
 
 1) With default properties files and resource folder
 node .
@@ -33,13 +33,13 @@ node . dev.properties db.properties resources
 3) With properties files and resource folder taken from user given location using command line input.
 node . c://proper/abc.properties c://proper/xyz.properties c://proper/resource
 
-POSTMAN COLLECTION
+************POSTMAN COLLECTION************
 
 https://www.getpostman.com/collections/8015c8fd8b51a63a988f
 
-Example CURL COMMANDS
+**********Example CURL COMMANDS**********
 
-1) CREATE
+1) **CREATE**
 
 POST /river/v1/resources HTTP/1.1
 Host: localhost:9091
@@ -69,7 +69,7 @@ Postman-Token: f4af6d3e-d1ce-49ef-8263-ae3035944c54
   }
 }
 
-2) UPDATE
+2) **UPDATE**
 
 PUT /river/v1/resources/52 HTTP/1.1
 Host: localhost:9091
@@ -96,7 +96,7 @@ Postman-Token: 7b608aad-6972-1f01-3abd-810385f3822e
   }
 }
 
-3) GET By ID
+3) **GET By ID**
 
 GET /river/v1/resources/55?schema=river&amp;table=user HTTP/1.1
 Host: localhost:9091
@@ -106,7 +106,7 @@ Cache-Control: no-cache
 Postman-Token: f32b34cb-6121-504a-61b8-c706b32edaa9
 
 
-4) DELETE By ID
+4) **DELETE By ID**
 
 DELETE /river/v1/resources/56?schema=river&table=user HTTP/1.1
 Host: localhost:9091
@@ -116,7 +116,7 @@ Cache-Control: no-cache
 Postman-Token: 54141262-a202-788e-9b4c-fa384d3fbb2c
 
 
-5) SEARCH by Search criteria
+5) **SEARCH by Search criteria**
 
 POST /river/v1/search HTTP/1.1
 Host: localhost:9091
@@ -167,7 +167,7 @@ Postman-Token: d8539cc8-ef1f-8038-1500-3e96e5960277
   "limit":200
 }
 
-6) POST delete based on criteria
+6) **POST delete based on criteria**
 
 DELETE /river/v1/delete HTTP/1.1
 Host: localhost:9091
@@ -185,7 +185,7 @@ Postman-Token: c4ae08b1-3576-8fb1-1955-cb25f10f3ffc
  }
 }
 
-7) GetAndDelete ::  Delete and send resource in response.
+7) **GetAndDelete ::  Delete and send resource in response.**
 
 DELETE /river/v1/getanddelete/resources/ddfdfd?schema=river&amp;table=last HTTP/1.1
 Host: localhost:9091
@@ -194,10 +194,10 @@ Authorization: Basic cml2ZXItZWphYjoxQDMkNV43KjkpLSs=
 Cache-Control: no-cache
 Postman-Token: c5bf15fa-2775-c0dc-dd8b-77595f33d107
 
-8) PutIfPresent : if resource present then update else CREATE it
+8) **PutIfPresent : if resource present then update else CREATE it**
 
 PUT /river/v1/putifpresent/resources/ddfdfd HTTP/1.1
-Host: localhost:9091
+Host: localhost:9091********
 Content-Type: application/json
 Authorization: Basic cml2ZXItZWphYjoxQDMkNV43KjkpLSs=
 Cache-Control: no-cache
@@ -209,6 +209,6 @@ Postman-Token: 4fc39a84-1eec-85d1-607b-cf2f2bf07a3e
   "operation":"update",
   "attr":{  
     "seconds":"100000",
-    "state":"hi theredfdfdfdfdf,ec bk"
+    "state":"Available for chat"
   }
 }

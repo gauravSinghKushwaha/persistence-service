@@ -12,7 +12,7 @@ fs.existsSync(logDir) || fs.mkdirSync(logDir);
 const opts = {
     logDirectory: logDir,
     fileNamePattern: logFileName,
-    dateFormat: 'YYYY.MM.DD-HH',//'YYYY.MM.DD-HH'
+    dateFormat: 'YYYY.MM.DD',//'YYYY.MM.DD-HH'
     createInterval: function (cb) {
         setInterval(cb, config.logs.rollinterval ? config.logs.rollinterval : 86400000);//milliseconds
     }

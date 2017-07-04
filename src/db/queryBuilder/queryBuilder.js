@@ -192,7 +192,10 @@ query.prototype.searchQuery = function () {
 
     if (isOrderingRequired) {
         queryStr = queryStr + SPACE + 'ORDER BY' + SPACE + orderby.order.join(',') + SPACE + (orderby.by != null && orderby.by != undefined ? orderby.by : 'ASC') + SPACE;
+    } else { // default ordering if any
+        queryStr = queryStr + SPACE + ((conf.searchconf && conf.searchconf.orderby && conf.searchconf.orderby.deforder) ? (' ORDER BY' + SPACE + conf.searchconf.orderby.deforder ) : '');
     }
+
     queryStr = queryStr + SPACE + 'LIMIT' + SPACE + (  limit ? limit : 10) + SPACE;
     if (offset) {
         queryStr = queryStr + SPACE + 'OFFSET' + SPACE + offset + SPACE;
