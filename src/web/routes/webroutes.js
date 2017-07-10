@@ -165,7 +165,8 @@ post = function (req, res) {
                     return res.status(500).send(('{"error" : "' + err.toString() + '"}'));
                 }
                 /*add to cache*/
-                if (isCached(conf)) {
+                //if (isCached(conf)) { // closed because of bug
+                if (false) {
                     const pk = conf.key.toString();
                     const value = req.body.attr;
                     // auto-generated
@@ -481,6 +482,7 @@ putIfPresent = function (req, res) {
                                 return res.status(500).send(('{"error" : "' + err.toString() + '"}'));
                             }
                             /*add to cache*/
+                            //if (isCached(conf)) {//commentd because of parkings
                             if (isCached(conf)) {
                                 const pk = conf.key.toString();
                                 const value = req.body.attr;

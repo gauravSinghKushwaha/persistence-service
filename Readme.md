@@ -1,4 +1,4 @@
-                                    **************************************PERSISTENCE SERVER**************************************
+                                            **PERSISTENCE SERVER**
 
 This is a NodeJs based REST module. Which can be used as a generic resource server to store information in DB.
 
@@ -212,3 +212,7 @@ Postman-Token: 4fc39a84-1eec-85d1-607b-cf2f2bf07a3e
     "state":"Available for chat"
   }
 }
+
+parkings :: 
+
+1) cache bug for post, cached non encryped and non hashed.

@@ -37,13 +37,13 @@
   ],
   "searchconf": {
     "fields": [
-      "id",
       "username",
       "display_name",
       "password",
       "phonenumber",
       "email",
       "age",
+      "country",
       "status",
       "domain",
       "resource",
@@ -53,22 +53,18 @@
       "updated_by"
     ],
     "where": [
-      "id",
       "username",
-      "display_name",
       "phonenumber",
-      "email",
-      "created_on",
-      "update_on"
+      "display_name",
+      "status",
+      "domain"
     ],
     "orderby": {
       "deforder": "id",
       "order": [
-        "status",
-        "phonenumber",
-        "email",
         "created_on",
-        "update_on"
+        "update_on",
+        "status"
       ],
       "by": [
         "asc",
@@ -88,7 +84,6 @@
   },
   "updateconf": {
     "fields": [
-      "username",
       "display_name",
       "phonenumber",
       "email",
