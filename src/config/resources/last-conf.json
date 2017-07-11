@@ -9,7 +9,7 @@
   ],
   "cached": {
     "allowed": true,
-    "expiry": 3600000,
+    "expiry": 21600000,
     "version": 1,
     "prefix": "last"
   },

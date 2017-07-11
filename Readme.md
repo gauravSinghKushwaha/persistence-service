@@ -212,7 +212,3 @@ Postman-Token: 4fc39a84-1eec-85d1-607b-cf2f2bf07a3e
     "state":"Available for chat"
   }
 }
-
-parkings :: 
-
-1) cache bug for post, cached non encryped and non hashed.

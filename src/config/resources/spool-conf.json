@@ -9,7 +9,7 @@
   ],
   "cached": {
     "allowed": false,
-    "expiry": 86400,
+    "expiry": 21600000,
     "version": 1,
     "prefix": "spool"
   },

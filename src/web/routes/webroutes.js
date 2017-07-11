@@ -146,6 +146,36 @@ function isCached(conf) {
     return conf && conf.cached && conf.cached.allowed && conf.cached.allowed == true;
 }
 
+function prepareAndAddToCache(conf, req, results, qb, cb) {
+    try {
+        if (isCached(conf)) {
+            const pk = conf.key.toString();
+            const value = req.body.attr;
+            // auto-generated
+            if (results && results.insertId > 0 && conf.auto.indexOf(pk) > -1) {
+                value[pk] = results.insertId;
+            } else if (req.params.id && Object.keys(req.params.id).length > 0) { // in URL
+                value[pk] = req.params.id;
+            }
+
+            const keys = Object.keys(value);
+            for (var i = 0; i < keys.length; i++) {
+                const k = keys[i].toString();
+                value[k] = qb.getEncryptedValue(conf, k, value[k], false);
+            }
+
+            addToCache(createKey(req.body.table, value[pk], conf), value, conf, function (err, res) {
+                if (err) {
+                    log.error('ERROR : cache add = ' + err);
+                    cb(err);
+                }
+            });
+        }
+    } catch (e) {
+        cb(e);
+    }
+}
+
 post = function (req, res) {
     cluster.execute(cluster.WRITE, function (err, connection) {
         if (err) {
@@ -154,10 +184,9 @@ post = function (req, res) {
         }
         try {
             const conf = jsonValidator.getConf(req.body.table);
-            qb = new QueryBuilder(req, jsonValidator.getSchema(req.body.table), conf);
+            const qb = new QueryBuilder(req, jsonValidator.getSchema(req.body.table), conf);
             q = qb.insertQuery();
             log.debug(q);
-
             connection.query(q.query, q.values, function (err, results, fields) {
                 releaseConnection(connection);
                 if (err) {
@@ -165,23 +194,12 @@ post = function (req, res) {
                     return res.status(500).send(('{"error" : "' + err.toString() + '"}'));
                 }
                 /*add to cache*/
-                //if (isCached(conf)) { // closed because of bug
-                if (false) {
-                    const pk = conf.key.toString();
-                    const value = req.body.attr;
-                    // auto-generated
-                    if (results && results.insertId > 0 && conf.auto.indexOf(pk) > -1) {
-                        value[pk] = results.insertId;
-                    } else if (req.params.id && Object.keys(req.params.id).length > 0) { // in URL
-                        value[pk] = req.params.id;
+                prepareAndAddToCache(conf, req, results, qb, function (err) {
+                    if (err) {
+                        log.error('error setting to cache ' + err);
                     }
-                    addToCache(createKey(req.body.table, value[pk], conf), value, conf, function (err, res) {
-                        if (err) {
-                            log.error('ERROR : cache add = ' + err);
-                        }
-                    });
-                    /*added to cache*/
-                }
+                });
+                /*add to cache end*/
                 return res.status(201).send('{"insertId" : ' + results.insertId + ', "changedRows" : ' + results.changedRows + ' , "affectedRows" : ' + results.affectedRows + '}');
             });
         } catch (err) {
@@ -270,20 +288,23 @@ get = function (req, res) {
     const resSchema = jsonValidator.getSchema(table);
     const conf = jsonValidator.getConf(table);
     if (table && schema && id && resSchema) {
+        const qb = new QueryBuilder(req, resSchema, conf);
         getCachedValue(createKey(table, id, conf), conf, function (err, result) {
             if (result) {
+                qb.decryptValues(result);
                 return res.status(200).send(result);
             } else {
-                log.error(err);
+                if (err) {
+                    log.error('error from cache = ' + err);
+                }
                 cluster.execute(cluster.READ, function (err, connection) {
                     if (err) {
-                        log.error(err);
+                        log.error('error from db read = ' + err);
                         return res.status(500).send(('{"error" : "' + err.toString() + '"}'));
                     }
                     try {
-                        qb = new QueryBuilder(req, resSchema, conf);
-                        q = qb.findById(table, schema, id);
-                        log.debug(q);
+                        const q = qb.findById(table, schema, id);
+                        log.debug('query obj = ' + q);
                         connection.query(q.query, q.values, function (err, results, fields) {
                             releaseConnection(connection);
                             if (err) {
@@ -464,7 +485,7 @@ putIfPresent = function (req, res) {
             try {
                 const table = req.body.table;
                 const conf = jsonValidator.getConf(table);
-                qb = new QueryBuilder(req, jsonValidator.getSchema(table), conf);
+                const qb = new QueryBuilder(req, jsonValidator.getSchema(table), conf);
                 q = qb.updateQuery();
                 log.debug(q);
                 connection.query(q.query, q.values, function (err, results, fields) { //update
@@ -482,23 +503,12 @@ putIfPresent = function (req, res) {
                                 return res.status(500).send(('{"error" : "' + err.toString() + '"}'));
                             }
                             /*add to cache*/
-                            //if (isCached(conf)) {//commentd because of parkings
-                            if (isCached(conf)) {
-                                const pk = conf.key.toString();
-                                const value = req.body.attr;
-                                // auto-generated
-                                if (results && results.insertId > 0 && conf.auto.indexOf(pk) > -1) {
-                                    value[pk] = results.insertId;
-                                } else if (req.params.id && Object.keys(req.params.id).length > 0) { // in URL
-                                    value[pk] = req.params.id;
+                            prepareAndAddToCache(conf, req, results, qb, function (err) {
+                                if (err) {
+                                    log.error('error setting to cache ' + err);
                                 }
-                                addToCache(createKey(req.body.table, value[pk], conf), value, conf, function (err, res) {
-                                    if (err) {
-                                        log.error('ERROR : cache add = ' + err);
-                                    }
-                                });
-                            }
-                            /*added to cache*/
+                            });
+                            /*add to cache end*/
                             return res.status(201).send('{"insertId" : ' + results.insertId + ', "changedRows" : ' + results.changedRows + ' , "affectedRows" : ' + results.affectedRows + '}');
                         });
                     } else {

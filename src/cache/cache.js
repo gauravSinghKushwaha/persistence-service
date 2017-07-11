@@ -32,7 +32,7 @@ function redisCache() {
     };
 
     this.redisClient = redis.createClient(this.con);
-    //this.redisClient.unref();
+    this.redisClient.unref();
 
     this.redisClient.on('ready', function () {
         log.info("Redis is ready");
@@ -109,7 +109,7 @@ redisCache.prototype.add = function (key, value, expiry, cb) {
                         log.error('ERROR :: cache add expiry' + err + ' key = ' + key);
                     }
                 });
-                log.debug('cache add :: key = ' + key + ' val = ' + val + ' res = ' + res);
+                log.debug('redis add :: key = ' + key + ' val = ' + val + ' res = ' + res);
                 cb(undefined, res);
             }
         });
