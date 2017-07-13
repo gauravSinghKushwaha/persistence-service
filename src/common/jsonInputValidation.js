@@ -24,7 +24,7 @@ InputValidator.prototype.getConf = function (resource) {
 InputValidator.prototype.validateWithSchema = function (jsonData, schema) {
     const result = v.validate(jsonData, schema);
     if (result.errors != null && result.errors.length > 0) {
-        var errMsg = "JSON validation failed. Reason :: " + result.errors.join(", ");
+        var errMsg = "input validation failed. Reason :: " + result.errors.join(", ");
         log.error(errMsg);
         throw new Error(errMsg);
     }

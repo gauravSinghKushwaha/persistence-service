@@ -23,12 +23,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/gauravSinghKushwaha/nodeRestTemplate.git"
+    "url": "git+https://github.com/gauravSinghKushwaha/persistence-service.git"
   },
   "author": "gaurav kushwaha <gkushwaha@gmail.com>",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/gauravSinghKushwaha/nodeRestTemplate/issues"
+    "url": "https://github.com/gauravSinghKushwaha/persistence-service/issues"
   },
-  "homepage": "https://github.com/gauravSinghKushwaha/nodeRestTemplate#readme"
+  "homepage": "https://github.com/gauravSinghKushwaha/persistence-service/blob/master/Readme.md"
 }

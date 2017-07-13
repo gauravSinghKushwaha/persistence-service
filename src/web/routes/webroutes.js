@@ -33,10 +33,10 @@ router.use(function timeLog(req, res, next) {
     /*API consumer's credentials matching*/
     var credentials = auth(req);
     if (!credentials || credentials.name != config.apiauth.user || credentials.pass != config.apiauth.pwd) {
-        log.warn('access denied for credentials = ' + credentials.name + ' pwd = ' + credentials.pass);
+        log.warn('basic auth failed, access denied for api . credentials = ' + credentials);
         res.status(401);
         res.setHeader('WWW-Authenticate', 'Basic realm="Secure Area"');
-        return res.send('{"success" : "Access denied"}');
+        return res.send({msg: 'Access denied'});
     }
 
     /*Validating request payload against json schema*/
@@ -71,7 +71,7 @@ router.use(function timeLog(req, res, next) {
         }
     } catch (err) {
         log.error(err);
-        return res.status(400).send(('{"error" : "' + err.toString() + '"}'));
+        return res.status(400).send({error: err.toString()});
     }
     next();
 });
@@ -180,7 +180,7 @@ post = function (req, res) {
     cluster.execute(cluster.WRITE, function (err, connection) {
         if (err) {
             log.error(err);
-            return res.status(500).send(('{"error" : "' + err.toString() + '"}'));
+            return res.status(500).send({error: err.toString()});
         }
         try {
             const conf = jsonValidator.getConf(req.body.table);
@@ -191,7 +191,7 @@ post = function (req, res) {
                 releaseConnection(connection);
                 if (err) {
                     log.error(err);
-                    return res.status(500).send(('{"error" : "' + err.toString() + '"}'));
+                    return res.status(500).send({error: err.toString()});
                 }
                 /*add to cache*/
                 prepareAndAddToCache(conf, req, results, qb, function (err) {
@@ -200,12 +200,16 @@ post = function (req, res) {
                     }
                 });
                 /*add to cache end*/
-                return res.status(201).send('{"insertId" : ' + results.insertId + ', "changedRows" : ' + results.changedRows + ' , "affectedRows" : ' + results.affectedRows + '}');
+                return res.status(201).send({
+                    insertId: results.insertId,
+                    changedRows: results.changedRows,
+                    affectedRows: results.affectedRows
+                });
             });
         } catch (err) {
             releaseConnection(connection);
             log.error(err);
-            return res.status(err.id ? err.id : 500).send(('{"error" : "' + err.toString() + '"}'));
+            return res.status(err.id ? err.id : 500).send({error: err.toString()});
         }
     });
 };
@@ -216,7 +220,7 @@ put = function (req, res) {
         cluster.execute(cluster.WRITE, function (err, connection) {
             if (err) {
                 log.error(err);
-                return res.status(500).send(('{"error" : "' + err.toString() + '"}'));
+                return res.status(500).send({error: err.toString()});
             }
             try {
                 const table = req.body.table;
@@ -229,7 +233,7 @@ put = function (req, res) {
                     releaseConnection(connection);
                     if (err) {
                         log.error(err);
-                        return res.status(500).send(('{"error" : "' + err.toString() + '"}'));
+                        return res.status(500).send({error: err.toString()});
                     }
                     /*remove from cache*/
                     removeFromCache(createKey(table, id, conf), conf, function (err, res) {
@@ -240,17 +244,17 @@ put = function (req, res) {
                         }
                     });
                     /*removed from cache*/
-                    return res.status(200).send('{"affectedRows" : ' + results.affectedRows + ', "changedRows" : ' + results.changedRows + '}');
+                    return res.status(200).send({affectedRows: results.affectedRows, changedRows: results.changedRows});
                 });
             } catch (err) {
                 releaseConnection(connection);
                 log.error(err);
-                return res.status(err.id ? err.id : 500).send(('{"error" : "' + err.toString() + '"}'));
+                return res.status(err.id ? err.id : 500).send({error: err.toString()});
             }
         });
     }
     else {
-        return res.status(400).send('{"error" : "' + 'id is missing."}');
+        return res.status(400).send({error: 'id is missing.'});
     }
 };
 
@@ -258,7 +262,7 @@ postSearch = function (req, res) {
     cluster.execute(cluster.READ, function (err, connection) {
         if (err) {
             log.error(err);
-            return res.status(500).send(('{"error" : "' + err.toString() + '"}'));
+            return res.status(500).send({error: err.toString()});
         }
         try {
             qb = new QueryBuilder(req, jsonValidator.getSchema(req.body.operation), jsonValidator.getConf(req.body.table));
@@ -268,7 +272,7 @@ postSearch = function (req, res) {
                 releaseConnection(connection);
                 if (err) {
                     log.error(err);
-                    return res.status(500).send(('{"error" : "' + err.toString() + '"}'));
+                    return res.status(500).send({error: err.toString()});
                 }
                 qb.decryptValues(results);
                 return res.status(200).send(results);
@@ -276,7 +280,7 @@ postSearch = function (req, res) {
         } catch (err) {
             releaseConnection(connection);
             log.error(err);
-            return res.status(err.id ? err.id : 500).send(('{"error" : "' + err.toString() + '"}'));
+            return res.status(err.id ? err.id : 500).send({error: err.toString()});
         }
     });
 };
@@ -300,7 +304,7 @@ get = function (req, res) {
                 cluster.execute(cluster.READ, function (err, connection) {
                     if (err) {
                         log.error('error from db read = ' + err);
-                        return res.status(500).send(('{"error" : "' + err.toString() + '"}'));
+                        return res.status(500).send({error: err.toString()});
                     }
                     try {
                         const q = qb.findById(table, schema, id);
@@ -309,7 +313,7 @@ get = function (req, res) {
                             releaseConnection(connection);
                             if (err) {
                                 log.error(err);
-                                return res.status(500).send(('{"error" : "' + err.toString() + '"}'));
+                                return res.status(500).send({error: err.toString()});
                             }
                             log.debug('results = ' + results.length + '\t\tfields = ' + fields);
                             qb.decryptValues(results);
@@ -325,13 +329,13 @@ get = function (req, res) {
                     } catch (err) {
                         releaseConnection(connection);
                         log.error(err);
-                        return res.status(err.id ? err.id : 500).send(('{"error" : "' + err.toString() + '"}'));
+                        return res.status(err.id ? err.id : 500).send({error: err.toString()});
                     }
                 });
             }
         });
     } else {
-        return res.status(400).send('{"error" : "' + 'Wrong request, Either table, schema , id is missing."}');
+        return res.status(400).send({error: 'Wrong request, Either table, schema or id is missing.'});
     }
 };
 
@@ -344,7 +348,7 @@ del = function (req, res) {
         cluster.execute(cluster.WRITE, function (err, connection) {
             if (err) {
                 log.error(err);
-                return res.status(500).send(('{"error" : "' + err.toString() + '"}'));
+                return res.status(500).send({error: err.toString()});
             }
             try {
                 const conf = jsonValidator.getConf(table);
@@ -355,7 +359,7 @@ del = function (req, res) {
                     releaseConnection(connection);
                     if (err) {
                         log.error(err);
-                        return res.status(500).send(('{"error" : "' + err.toString() + '"}'));
+                        return res.status(500).send({error: err.toString()});
                     }
                     /*remove from cache*/
                     removeFromCache(createKey(table, id, conf), conf, function (err, res) {
@@ -366,12 +370,12 @@ del = function (req, res) {
                         }
                     });
                     /*removed from cache*/
-                    return res.status(200).send('{"deleted" : "' + results.affectedRows + '"}');
+                    return res.status(200).send({affectedRows: results.affectedRows});
                 });
             } catch (err) {
                 releaseConnection(connection);
                 log.error(err);
-                return res.status(err.id ? err.id : 500).send(('{"error" : "' + err.toString() + '"}'));
+                return res.status(err.id ? err.id : 500).send({error: err.toString()});
             }
         });
     } else {
@@ -383,7 +387,7 @@ postDel = function (req, res) {
     cluster.execute(cluster.WRITE, function (err, connection) {
         if (err) {
             log.error(err);
-            return res.status(500).send(('{"error" : "' + err.toString() + '"}'));
+            return res.status(500).send({error: err.toString()});
         }
         try {
             const table = req.body.table;
@@ -395,7 +399,7 @@ postDel = function (req, res) {
                 releaseConnection(connection);
                 if (err) {
                     log.error(err);
-                    return res.status(500).send(('{"error" : "' + err.toString() + '"}'));
+                    return res.status(500).send({error: err.toString()});
                 }
 
                 /*removing from cache*/
@@ -414,12 +418,12 @@ postDel = function (req, res) {
                 }
                 /*removed from cache*/
 
-                return res.status(200).send('{"deleted" : "' + results[1].affectedRows + '"}');
+                return res.status(200).send({affectedRows: results[1].affectedRows});
             });
         } catch (err) {
             releaseConnection(connection);
             log.error(err);
-            return res.status(err.id ? err.id : 500).send(('{"error" : "' + err.toString() + '"}'));
+            return res.status(err.id ? err.id : 500).send({error: err.toString()});
         }
     });
 };
@@ -432,7 +436,7 @@ getAndDelete = function (req, res) {
         cluster.execute(cluster.WRITE, function (err, connection) {
             if (err) {
                 log.error(err);
-                return res.status(500).send(('{"error" : "' + err.toString() + '"}'));
+                return res.status(500).send({error: err.toString()});
             }
             try {
                 const conf = jsonValidator.getConf(table);
@@ -443,7 +447,7 @@ getAndDelete = function (req, res) {
                     releaseConnection(connection);
                     if (err) {
                         log.error(err);
-                        return res.status(500).send(('{"error" : "' + err.toString() + '"}'));
+                        return res.status(500).send({error: err.toString()});
                     }
                     qb.decryptValues(results[0]);
                     /*removing from cache*/
@@ -466,11 +470,11 @@ getAndDelete = function (req, res) {
             } catch (err) {
                 releaseConnection(connection);
                 log.error(err);
-                return res.status(err.id ? err.id : 500).send(('{"error" : "' + err.toString() + '"}'));
+                return res.status(err.id ? err.id : 500).send({error: err.toString()});
             }
         });
     } else {
-        return res.status(400).send('{"error" : "' + 'Wrong request, Either table, schema , id is missing."}');
+        return res.status(400).send({error: 'Wrong request, Either table, schema , id is missing.'});
     }
 };
 
@@ -480,7 +484,7 @@ putIfPresent = function (req, res) {
         cluster.execute(cluster.WRITE, function (err, connection) {
             if (err) {
                 log.error(err);
-                return res.status(500).send(('{"error" : "' + err.toString() + '"}'));
+                return res.status(500).send({error: err.toString()});
             }
             try {
                 const table = req.body.table;
@@ -491,7 +495,7 @@ putIfPresent = function (req, res) {
                 connection.query(q.query, q.values, function (err, results, fields) { //update
                     if (err) {
                         log.error(err);
-                        return res.status(500).send(('{"error" : "' + err.toString() + '"}'));
+                        return res.status(500).send({error: err.toString()});
                     }
                     if (results.changedRows <= 0 && results.affectedRows <= 0) {
                         q = qb.insertQuery();
@@ -500,7 +504,7 @@ putIfPresent = function (req, res) {
                             releaseConnection(connection);
                             if (err) {
                                 log.error(err);
-                                return res.status(500).send(('{"error" : "' + err.toString() + '"}'));
+                                return res.status(500).send({error: err.toString()});
                             }
                             /*add to cache*/
                             prepareAndAddToCache(conf, req, results, qb, function (err) {
@@ -509,7 +513,11 @@ putIfPresent = function (req, res) {
                                 }
                             });
                             /*add to cache end*/
-                            return res.status(201).send('{"insertId" : ' + results.insertId + ', "changedRows" : ' + results.changedRows + ' , "affectedRows" : ' + results.affectedRows + '}');
+                            return res.status(201).send({
+                                insertId: results.insertId,
+                                changedRows: results.changedRows,
+                                affectedRows: results.affectedRows
+                            });
                         });
                     } else {
                         /*remove from cache*/
@@ -521,18 +529,21 @@ putIfPresent = function (req, res) {
                             }
                         });
                         /*removed from cache*/
-                        return res.status(201).send('{"affectedRows" : ' + results.affectedRows + ', "changedRows" : ' + results.changedRows + '}');
+                        return res.status(201).send({
+                            affectedRows: results.affectedRows,
+                            changedRows: results.changedRows
+                        });
                     }
                 });
             } catch (err) {
                 releaseConnection(connection);
                 log.error(err);
-                return res.status(err.id ? err.id : 500).send(('{"error" : "' + err.toString() + '"}'));
+                return res.status(err.id ? err.id : 500).send({error: err.toString()});
             }
         });
     }
     else {
-        return res.status(400).send('{"error" : "' + 'id is missing."}');
+        return res.status(400).send({error: 'id is missing.'});
     }
 };
 
@@ -542,7 +553,7 @@ router.route('/resources').post(function (req, res) {
         post(req, res);
     } catch (err) {
         log.error(err);
-        return res.status(err.id ? err.id : 500).send(('{"error" : "' + err.toString() + '"}'));
+        return res.status(err.id ? err.id : 500).send({error: err.toString()});
     }
 });
 
@@ -553,7 +564,7 @@ router.route('/resources/:id').post(function (req, res) {
         post(req, res);
     } catch (err) {
         log.error(err);
-        return res.status(err.id ? err.id : 500).send(('{"error" : "' + err.toString() + '"}'));
+        return res.status(err.id ? err.id : 500).send({error: err.toString()});
     }
 });
 
@@ -563,7 +574,7 @@ router.route('/resources/:id').put(function (req, res) {
         put(req, res);
     } catch (err) {
         log.error(err);
-        return res.status(err.id ? err.id : 500).send(('{"error" : "' + err.toString() + '"}'));
+        return res.status(err.id ? err.id : 500).send({error: err.toString()});
     }
 });
 
@@ -587,7 +598,7 @@ router.route('/resources/:id').delete(function (req, res) {
         del(req, res);
     } catch (err) {
         log.error(err);
-        return res.status(err.id ? err.id : 500).send(('{"error" : "' + err.toString() + '"}'));
+        return res.status(err.id ? err.id : 500).send({error: err.toString()});
     }
 });
 
@@ -602,7 +613,7 @@ router.route('/search').post(function (req, res) {
         postSearch(req, res);
     } catch (err) {
         log.error(err);
-        return res.status(err.id ? err.id : 500).send(('{"error" : "' + err.toString() + '"}'));
+        return res.status(err.id ? err.id : 500).send({error: err.toString()});
     }
 });
 
@@ -613,7 +624,7 @@ router.route('/delete').delete(function (req, res) {
         postDel(req, res);
     } catch (err) {
         log.error(err);
-        return res.status(err.id ? err.id : 500).send(('{"error" : "' + err.toString() + '"}'));
+        return res.status(err.id ? err.id : 500).send({error: err.toString()});
     }
 });
 
@@ -625,7 +636,7 @@ router.route('/getanddelete/resources/:id').delete(function (req, res) {
         getAndDelete(req, res);
     } catch (err) {
         log.error(err);
-        return res.status(err.id ? err.id : 500).send(('{"error" : "' + err.toString() + '"}'));
+        return res.status(err.id ? err.id : 500).send({error: err.toString()});
     }
 });
 
