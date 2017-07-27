@@ -41,7 +41,7 @@
         },
         "display_name": {
           "type": "string",
-          "minLength": 4,
+          "minLength": 3,
           "maxLength": 128,
           "disallow": [
             "boolean",
@@ -61,10 +61,10 @@
         },
         "phonenumber": {
           "type": "integer",
-          "minLength": 10,
-          "maxLength": 12,
-          "minimum": 100000000,
-          "maximum": 999999999999,
+          "minLength": 5,
+          "maxLength": 15,
+          "minimum": 10000,
+          "maximum": 999999999999999,
           "disallow": [
             "boolean",
             "string"

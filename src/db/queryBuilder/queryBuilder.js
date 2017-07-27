@@ -1,6 +1,7 @@
 const conf = require('./../../config/config');
 const log = require('./../../log/logger');
 const crypt = require('./../../common/encrypt');
+const util = require('util');
 
 const DOT = ".";
 const SPACE = " ";
@@ -94,6 +95,8 @@ query.prototype.decryptValues = function (results) {
 
 /**
  * Based on column mentioned in body and schema, method creates conditions and values array for help building query
+ *
+ * USED for both POST and PUT..so test both endpoint if you make any changes here
  */
 query.prototype.createConditionsAndValues = function () {
     const conditions = [];
@@ -101,20 +104,31 @@ query.prototype.createConditionsAndValues = function () {
     const strColKeyArray = [];
     const schemaCols = this.schemaCols;
     const conf = this.conf;
+    // apart from bulk insert this will only have one object in array
     const colMap = buildMap(this.cols);
-    const schemaColMap = buildMap(schemaCols);
+    // only one schema we support as of now
+    const schemaColMap = buildMap(schemaCols)[0];
 
     log.debug('cols= ' + JSON.stringify(this.cols) + '\t\tconf.hashed =' + JSON.stringify(conf.hashed) + '\t\tconf.encrypted = ' + JSON.stringify(conf.encrypted) +
         '\t\tconf.autoids = ' + JSON.stringify(conf.autoids) + '\t\tschemaCols = ' + JSON.stringify(schemaCols));
 
-    const keys = Object.keys(this.cols);
+    // taking column name from first data row in attr...all the subsequent need to have same column names
+    const keys = Object.keys(util.isArray(this.cols) ? this.cols[0] : this.cols);
     for (j = 0; j < keys.length; j++) {
         const k = keys[j].toString();
-        const colValue = colMap.get(k) != null && colMap.get(k) != undefined ? colMap.get(k) : (schemaColMap.get(k).optional != null ? schemaColMap.get(k).optional != null : null);
-        if (colValue) {
-            conditions.push(k);
-            values.push(this.getEncryptedValue(conf, k, colValue, false));
+        conditions.push(k);
+    }
+    for (f = 0; f < colMap.length; f++) {
+        const cm = colMap[f];
+        const val = [];
+        for (h = 0; h < keys.length; h++) {
+            const k = keys[h].toString();
+            const colValue = cm.get(k) != null && cm.get(k) != undefined ? cm.get(k) : (schemaColMap.get(k).optional ? schemaColMap.get(k).optional : undefined);
+            if (colValue) {
+                val.push(this.getEncryptedValue(conf, k, colValue, false));
+            }
         }
+        values.push(val);
     }
     return {"conditions": conditions, "values": values};
 };
@@ -129,14 +143,16 @@ query.prototype.insertQuery = function () {
     log.debug('condition values from input ' + q);
     if (isValidObject(this.req.params.id) && !contains(conf.auto, conf.key) && !contains(q.conditions, conf.key)) {
         q.conditions.push(conf.key);
-        q.values.push(this.req.params.id);
+        if (util.isArray(q.values)) {
+            for (k = 0; k < q.values.length; k++) {
+                const val = (q.values)[k];
+                val.push(this.req.params.id);
+            }
+        } else {
+            q.values.push(this.req.params.id);
+        }
     }
-    queryStr += q.conditions.join(',') + ')' + SPACE + 'values(';
-    q.values.forEach(function (val) {
-        queryStr += '?,';
-    });
-    queryStr = queryStr.substr(0, queryStr.length - 1) + ')';
-
+    queryStr += q.conditions.join(',') + ')' + SPACE + ' VALUES ?';
     log.debug('query : ' + queryStr);
     return {
         "query": {
@@ -144,7 +160,7 @@ query.prototype.insertQuery = function () {
             nestTables: conf.query && conf.query.nesttables ? conf.query.nesttables : false,
             timeout: conf.query && conf.query.timeout ? conf.query.timeout : 60000
         },
-        "values": q.values
+        "values": [q.values]
     };
 };
 
@@ -163,6 +179,8 @@ query.prototype.updateQuery = function () {
     log.debug('condition values from input ' + q);
     queryStr += q.conditions.join('= ? , ');
     queryStr += SPACE + ' = ? WHERE' + SPACE + conf.key + ' = ?';
+    // for update we should have only one row in array
+    q.values = (util.isArray(q.values) && q.values.length == 1) ? q.values[0] : q.values;
     q.values.push(this.req.params.id);
     return {
         "query": {
@@ -170,7 +188,7 @@ query.prototype.updateQuery = function () {
             nestTables: conf.query && conf.query.nesttables ? conf.query.nesttables : false,
             timeout: conf.query && conf.query.timeout ? conf.query.timeout : 60000
         },
-        "values": q.values
+        "values": (util.isArray(q.values) && q.values.length == 1) ? q.values[0] : q.values
     };
 };
 
@@ -398,10 +416,27 @@ function validateFields(clause, allowedFields, actualFields) {
  * @returns {Map}
  */
 function buildMap(obj) {
-    const map = new Map();
-    Object.keys(obj).forEach(function (key) {
-        map.set(key.toString(), obj[key]);
-    });
-    return map;
+    const li = [];
+    if (util.isArray(obj)) {
+        for (g = 0; g < obj.length; g++) {
+            var map = new Map();
+            var o = obj[g];
+            var keys = Object.keys(o);
+            for (h = 0; h < keys.length; h++) {
+                var key = keys[h];
+                map.set(key.toString(), o[key]);
+            }
+            li.push(map);
+        }
+    } else {
+        const map = new Map();
+        const keys = Object.keys(obj);
+        for (h = 0; h < keys.length; h++) {
+            const key = keys[h];
+            map.set(key.toString(), obj[key]);
+        }
+        li.push(map);
+    }
+    return li;
 }
 module.exports = query;

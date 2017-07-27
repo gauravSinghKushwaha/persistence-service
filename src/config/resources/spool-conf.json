@@ -35,6 +35,9 @@
     "seq",
     "created_at"
   ],
+  "bulk": {
+    "size": 32
+  },
   "searchconf": {
     "fields": [
       "username",

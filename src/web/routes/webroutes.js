@@ -5,6 +5,8 @@ const cache = require('./../../cache/cache');
 const jsonValidator = require('./../../common/jsonInputValidation');
 const QueryBuilder = require('./../../db/queryBuilder/queryBuilder');
 const express = require('express');
+const util = require('util');
+
 /**
  * Calling querybuilder to build queries and executing here....
  *
@@ -31,12 +33,13 @@ function releaseConnection(connection) {
  */
 router.use(function timeLog(req, res, next) {
     /*API consumer's credentials matching*/
+    res.setHeader('Content-Type', 'application/json');
     var credentials = auth(req);
     if (!credentials || credentials.name != config.apiauth.user || credentials.pass != config.apiauth.pwd) {
         log.warn('basic auth failed, access denied for api . credentials = ' + credentials);
         res.status(401);
         res.setHeader('WWW-Authenticate', 'Basic realm="Secure Area"');
-        return res.send({msg: 'Access denied'});
+        return res.send({error: 'Access denied'});
     }
 
     /*Validating request payload against json schema*/
@@ -147,29 +150,45 @@ function isCached(conf) {
 }
 
 function prepareAndAddToCache(conf, req, results, qb, cb) {
+    const pk = conf.key.toString();
+    const rows = req.body.attr;
+
+    function enrichCacheObj(value) {
+        // auto-generated
+        if (results && results.insertId > 0 && conf.auto.indexOf(pk) > -1) {
+            value[pk] = results.insertId;
+        } else if (req.params.id && Object.keys(req.params.id).length > 0) { // in URL
+            value[pk] = req.params.id;
+        }
+
+        const keys = Object.keys(value);
+        for (var i = 0; i < keys.length; i++) {
+            const k = keys[i].toString();
+            value[k] = qb.getEncryptedValue(conf, k, value[k], false);
+        }
+    }
+
     try {
         if (isCached(conf)) {
-            const pk = conf.key.toString();
-            const value = req.body.attr;
-            // auto-generated
-            if (results && results.insertId > 0 && conf.auto.indexOf(pk) > -1) {
-                value[pk] = results.insertId;
-            } else if (req.params.id && Object.keys(req.params.id).length > 0) { // in URL
-                value[pk] = req.params.id;
+            if (util.isArray(rows)) {
+                rows.forEach(function (value) {
+                    enrichCacheObj(value);
+                    addToCache(createKey(req.body.table, value[pk], conf), value, conf, function (err, res) {
+                        if (err) {
+                            log.error('ERROR : cache add = ' + err);
+                            cb(err);
+                        }
+                    });
+                });
+            } else {
+                enrichCacheObj(rows);
+                addToCache(createKey(req.body.table, rows[pk], conf), rows, conf, function (err, res) {
+                    if (err) {
+                        log.error('ERROR : cache add = ' + err);
+                        cb(err);
+                    }
+                });
             }
-
-            const keys = Object.keys(value);
-            for (var i = 0; i < keys.length; i++) {
-                const k = keys[i].toString();
-                value[k] = qb.getEncryptedValue(conf, k, value[k], false);
-            }
-
-            addToCache(createKey(req.body.table, value[pk], conf), value, conf, function (err, res) {
-                if (err) {
-                    log.error('ERROR : cache add = ' + err);
-                    cb(err);
-                }
-            });
         }
     } catch (e) {
         cb(e);

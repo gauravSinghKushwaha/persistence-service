@@ -212,3 +212,26 @@ Postman-Token: 4fc39a84-1eec-85d1-607b-cf2f2bf07a3e
     "state":"Available for chat"
   }
 }
+
+9) Supporting bulk insert for resource if permissible via resource conf. 
+
+POST /river/v1/resources/user1 HTTP/1.1
+Host: localhost:9091
+Content-Type: application/json
+Authorization: Basic cml2ZXItZWphYjoxQDMkNV43KjkpLSs=
+Cache-Control: no-cache
+Postman-Token: 625da126-507f-dd4b-4b0e-4c6c243fd6e6
+
+{  
+  "schema":"river",
+  "table":"spool",
+  "attr":[{  
+    "xml":"<dmxmd>hello, how are you :1)<dfdfd>"
+  },{  
+    "xml":"<dmxmd>hello, how are you :2)<dfdfd>"
+  },{  
+    "xml":"<dmxmd>hello, how are you :3)<dfdfd>"
+  },{  
+    "xml":"<dmxmd>hello, how are you :4)<dfdfd>"
+  }]
+}

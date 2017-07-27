@@ -1,11 +1,13 @@
 const conf = require('./../config/config');
 const log = require('./../log/logger');
-var Validator = require('jsonschema').Validator;
-var v = new Validator();
+const Validator = require('jsonschema').Validator;
+const v = new Validator();
+const util = require('util');
+
 const CONF = '-conf';
 
 function isValidationRequired(jsonData) {
-    if (jsonData != null && jsonData != undefined && Object.keys(jsonData).length > 0) {
+    if (jsonData != null && jsonData != undefined && (Object.keys(jsonData).length > 0) || util.isArray(jsonData.attr)) {
         return true;
     }
     return false;
@@ -33,9 +35,30 @@ InputValidator.prototype.validateWithSchema = function (jsonData, schema) {
 
 InputValidator.prototype.validate = function (jsonData) {
     if (isValidationRequired(jsonData)) {
-        const schema = this.getSchema(jsonData.operation ? jsonData.operation : jsonData.table);
-        log.debug('jsonData = ' + JSON.stringify(jsonData) + '\n schema = ' + JSON.stringify(schema));
-        this.validateWithSchema(jsonData, schema);
+        const resource = jsonData.operation ? jsonData.operation : jsonData.table;
+        const schema = this.getSchema(resource);
+        const schemaConf = this.getConf(resource);
+        log.debug('jsonData = ' + JSON.stringify(jsonData) + '\n schema = ' + JSON.stringify(schema) + '\n schemaConf = ' + JSON.stringify(schemaConf));
+        const rows = jsonData.attr;
+        if (util.isArray(rows) && schemaConf && schemaConf.bulk) {
+            if (rows.length > schemaConf.bulk.max) {
+                throw new Error('You could bulk maximum of ' + schemaConf.bulk.max + ' records.');
+            }
+            for (var l = 0; l < rows.length; l++) {
+                const obj = {
+                    "schema": jsonData.schema,
+                    "table": jsonData.table,
+                    "attr": rows[l]
+                };
+                // if one fails all fails
+                this.validateWithSchema(obj, schema);
+            }
+        } else {
+            if (util.isArray(rows)) {
+                throw new Error('Bulk insert not allow on this resource.');
+            }
+            this.validateWithSchema(jsonData, schema);
+        }
     }
     return true;
 };
