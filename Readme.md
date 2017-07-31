@@ -5,7 +5,7 @@ This is a NodeJs based REST module. Which can be used as a generic resource serv
 1) Takes regular properties properties from /src/config/properties/dev.properties. Can be put ANYWHERE , Can be named ANYTHING
 2) Takes DB properties and connection settings from /src/config/properties/db.properties. Can be put ANYWHERE , Can be named ANYTHING
 3) Uses basic auth for api caller authentication, use credentials given in properties file /src/config/properties/dev.properties as of now.
-4) Hashes of sensitive information like password. Default algo - SHA-256, could be configured using properties file /src/config/properties/dev.properties.
+4) Hashes of sensitive information like password.```` Default algo - SHA-256, could be configured using properties file /src/config/properties/dev.properties.
    Fields requiring hashing could be declared in resource conf file located in folder ./src/config/resources.[Folder can be put ANYWHERE ,Folder Can be named ANYTHING]
 5) It Logs access logs for all the rest calls in directory/file configured in properties file /src/config/properties/dev.properties.
 6) It Logs application logs in directory/file configured in properties /src/config/properties/dev.properties.
@@ -234,4 +234,46 @@ Postman-Token: 625da126-507f-dd4b-4b0e-4c6c243fd6e6
   },{  
     "xml":"<dmxmd>hello, how are you :4)<dfdfd>"
   }]
+}
+
+10) IN clause in search
+
+POST /river/v1/search HTTP/1.1
+Host: localhost:9091
+Content-Type: application/json
+Authorization: Basic cml2ZXItZWphYjoxQDMkNV43KjkpLSs=
+Cache-Control: no-cache
+Postman-Token: 5037f1cd-3b92-3013-530c-9f8ad6b2a57a
+
+{  
+  "schema":"river",
+  "table":"user",
+  "operation":"search",
+  "fields":[
+    "username",
+    "display_name",
+    "password",
+    "phonenumber",
+    "email",
+    "age",
+    "status",
+    "domain",
+    "resource",
+    "created_on",
+    "created_by",
+    "update_on",
+    "updated_by"
+  ],
+  "where":{  
+      "phonenumber":[9999999999,9999999999],
+      "status":"active",
+      "display_name": ["user2","user1"]
+  },
+  "orderby":{  
+    "order":[  
+      "status"
+    ],
+    "by":"ASC"
+  },
+  "limit":200
 }

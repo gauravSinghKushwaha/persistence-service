@@ -6,6 +6,7 @@ const util = require('util');
 const DOT = ".";
 const SPACE = " ";
 const SEMICOLON = ';';
+
 /**
  * Query builder ; IF you update , check https://github.com/mysqljs/mysql for building effective and better queries
  * @param req
@@ -217,10 +218,22 @@ query.prototype.searchQuery = function () {
     const keys = Object.keys(where);
     for (i = 0; i < keys.length; i++) {
         const k = keys[i];
-        values.push(this.getEncryptedValue(conf, k.toString(), where[k], true));
+        const wheObj = where[k];
+        queryStr = queryStr + k;
+        if (util.isArray(wheObj)) {
+            queryStr = queryStr + ' IN (';
+            for (j = 0; j < wheObj.length; j++) {
+                queryStr = queryStr + (j < wheObj.length - 1 ? ' ? ,' : ' ? ');
+                values.push(this.getEncryptedValue(conf, k.toString(), wheObj[j], true));
+            }
+            queryStr = queryStr + ' )';
+        } else {
+            queryStr = queryStr + ' = ? ';
+            values.push(this.getEncryptedValue(conf, k.toString(), wheObj, true));
+        }
+        queryStr = queryStr + (i < keys.length - 1 ? ' AND ' : SPACE);
     }
 
-    queryStr = queryStr + keys.join(' = ? AND ') + ' = ? ' + SPACE;
     if (isOrderingRequired) {
         queryStr = queryStr + SPACE + 'ORDER BY' + SPACE + orderby.order.join(',') + SPACE + (orderby.by != null && orderby.by != undefined ? orderby.by : 'ASC') + SPACE;
     } else { // default ordering if any
@@ -383,9 +396,11 @@ function isValidObject(obj) {
 function contains(arr, obj) {
     return isLegalArray(arr) && arr.indexOf(obj) > -1;
 }
+
 function isLegalArray(subArray) {
     return subArray != null && subArray != undefined && subArray.length > 0;
 }
+
 /**
  * true if all the elements of subArray are in array
  * @param array
@@ -439,4 +454,5 @@ function buildMap(obj) {
     }
     return li;
 }
+
 module.exports = query;

@@ -47,9 +47,19 @@ router.use(function timeLog(req, res, next) {
         const keys = Object.keys(colValArray);
         for (i = 0; i < keys.length; i++) {
             const k = keys[i].toString();
-            var obj = {};
-            obj[k] = colValArray[k];
-            jsonValidator.validateWithSchema(colValArray[k], schema.properties.attr.properties[k]);
+            const obj = colValArray[k];
+            const miniSchema = schema.properties.attr.properties[k];
+            // e.g. post search where username in (.._
+            if (util.isArray(obj)) {
+                if (obj.length > 1024) {
+                    throw new Error('In clause can have maximum of 1024.');
+                }
+                for (j = 0; j < obj.length; j++) {
+                    jsonValidator.validateWithSchema(obj[j], miniSchema);
+                }
+            } else {
+                jsonValidator.validateWithSchema(obj, miniSchema);
+            }
         }
     }
 
