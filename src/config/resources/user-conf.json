@@ -15,14 +15,14 @@
   "cached": {
     "allowed": true,
     "expiry": 21600000,
-    "version": 1,
+    "version": 2,
     "prefix": "user"
   },
   "key": "username",
   "hashed": [
-    "password"
   ],
   "encrypted": [
+    "password",
     "email",
     "phonenumber"
   ],
