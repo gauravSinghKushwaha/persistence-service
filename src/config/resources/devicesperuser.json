@@ -1,0 +1,64 @@
+{
+  "description": "devices per user",
+  "type": "object",
+  "properties": {
+    "schema": {
+      "type": "string",
+      "description": "DB schema to be used",
+      "required": true
+    },
+    "table": {
+      "type": "string",
+      "required": true,
+      "description": "DB table to be used"
+    },
+    "attr": {
+      "type": "object",
+      "minProperties": 1,
+      "maxProperties": 3,
+      "required": true,
+      "description": "resource object",
+      "properties": {
+        "username": {
+          "type": "string",
+          "minLength": 4,
+          "maxLength": 191,
+          "disallow": [
+            "boolean",
+            "integer"
+          ],
+          "description": "user name"
+        },
+        "device_id": {
+          "type": "string",
+          "minLength": 4,
+          "maxLength": 191,
+          "disallow": [
+            "boolean",
+            "integer"
+          ],
+          "description": "unique device id"
+        },
+        "created_on": {
+          "type": "string",
+          "format": "date-time",
+          "disallow": [
+            "boolean",
+            "integer"
+          ],
+          "description": "created at date"
+        },
+        "notifiable": {
+          "type": "string",
+          "minLength": 4,
+          "maxLength": 10,
+          "disallow": [
+            "boolean",
+            "integer"
+          ],
+          "description": "device to notify with push"
+        }
+      }
+    }
+  }
+}

@@ -95,23 +95,57 @@ function createKey(table, pkValue, conf) {
     return cacheKey;
 }
 
+function addSingleValueToCache(key, value, conf, cb) {
+    cache.add(key, value, conf.cached.expiry, function (err, result) {
+        cb(err, result);
+    });
+}
+
+function addMultiValueKeysToCacheList(key, value, conf, cb) {
+    cache.addToList(key, value, function (err, result) {
+        if (err) {
+            cb(err);
+            return;
+        } else {
+            cache.setExpiry(key, conf.cached.expiry, function (err) {
+                if (err) {
+                    log.error('error setting expiry for ' + key + ' expiry = ' + conf.cached.expiry);
+                    cb(err);
+                    return;
+                }
+            });
+        }
+        cb(err, result);
+    });
+}
+
+function logCacheNotEnabled(cb) {
+    log.debug('{"info": "Cache no enabled for this resource."}');
+    cb();
+}
+
+function isResourceKeyReturnMultipleRows(conf) {
+    return conf.multiValueKey;
+}
+
+function addToCache(key, value, conf, cb) {
+    if (isResourceKeyReturnMultipleRows(conf)) {
+        addMultiValueKeysToCacheList(key, value, conf, cb);
+    } else {
+        addSingleValueToCache(key, value, conf, cb);
+    }
+}
+
 /**
  * add create/POST to cache
  * @param key
  * @param value
  */
-function addToCache(key, value, conf, cb) {
+function addToRedisCache(key, value, conf, cb) {
     if (isCached(conf)) {
-        cache.add(key, value, conf.cached.expiry, function (err, result) {
-            if (err) {
-                cb(err);
-            } else {
-                cb(undefined, result);
-            }
-        });
+        addToCache(key, value, conf, cb);
     } else {
-        log.debug('{"info": "Cache no enabled for this resource."}');
-        cb();
+        logCacheNotEnabled(cb);
     }
 }
 
@@ -121,16 +155,17 @@ function addToCache(key, value, conf, cb) {
  */
 function getCachedValue(key, conf, cb) {
     if (isCached(conf)) {
-        cache.get(key, function (err, result) {
-            if (err) {
-                cb(err);
-            } else {
-                cb(undefined, result)
-            }
-        });
+        if (isResourceKeyReturnMultipleRows(conf)) {
+            cache.getListMembers(key, function (err, result) {
+                cb(err, result);
+            });
+        } else {
+            cache.get(key, function (err, result) {
+                cb(err, result);
+            });
+        }
     } else {
-        log.debug('{"info": "Cache no enabled for this resource."}');
-        cb();
+        logCacheNotEnabled(cb);
     }
 }
 
@@ -159,46 +194,90 @@ function isCached(conf) {
     return conf && conf.cached && conf.cached.allowed && conf.cached.allowed == true;
 }
 
-function prepareAndAddToCache(conf, req, results, qb, cb) {
-    const pk = conf.key.toString();
-    const rows = req.body.attr;
-
-    function enrichCacheObj(value) {
-        // auto-generated
-        if (results && results.insertId > 0 && conf.auto.indexOf(pk) > -1) {
-            value[pk] = results.insertId;
-        } else if (req.params.id && Object.keys(req.params.id).length > 0) { // in URL
-            value[pk] = req.params.id;
-        }
-
-        const keys = Object.keys(value);
-        for (var i = 0; i < keys.length; i++) {
-            const k = keys[i].toString();
-            value[k] = qb.getEncryptedValue(conf, k, value[k], false);
-        }
+function getResIdToObject(dbInsertId, conf, resourceKey, requestParameterId) {
+// auto-generated
+    if (dbInsertId && dbInsertId > 0 && conf.auto.indexOf(resourceKey) > -1) {
+        return dbInsertId;
+    } else if (requestParameterId && Object.keys(requestParameterId).length > 0) { // in URL
+        return requestParameterId;
     }
+    return undefined;
+}
 
-    try {
-        if (isCached(conf)) {
-            if (util.isArray(rows)) {
-                rows.forEach(function (value) {
-                    enrichCacheObj(value);
-                    addToCache(createKey(req.body.table, value[pk], conf), value, conf, function (err, res) {
-                        if (err) {
-                            log.error('ERROR : cache add = ' + err);
-                            cb(err);
-                        }
-                    });
-                });
+function hashEncryptAttributes(value, conf, qb) {
+    const keys = Object.keys(value);
+    for (var i = 0; i < keys.length; i++) {
+        const k = keys[i].toString();
+        value[k] = qb.getEncryptedValue(conf, k, value[k], false);
+    }
+}
+
+function addAttributeToObject(obj, attributeKey, attributeValue) {
+    if (attributeValue) {
+        obj[attributeKey] = attributeValue;
+    }
+}
+
+function logError(err) {
+    if (err) {
+        log.error('ERROR : cache add = ' + err);
+    }
+}
+
+function logErrorWithCallBack(err, cb) {
+    log.error('ERROR : cache add = ' + err);
+    cb(err);
+}
+
+function addToCacheAgainstKey(tableName, restObject, resourceConf, cb) {
+    const resourceKey = resourceConf.key.toString();
+    if (util.isArray(restObject)) {
+        restObject.forEach(function (cacheCandidate) {
+            const cacheKey = createKey(tableName, cacheCandidate[resourceKey], resourceConf);
+            addToRedisCache(cacheKey, cacheCandidate, resourceConf, function (err, res) {
+                logError(err);
+            });
+        });
+        cb(undefined);
+    } else {
+        const cacheKey = createKey(tableName, restObject[resourceKey], resourceConf);
+        addToRedisCache(cacheKey, restObject, resourceConf, function (err, res) {
+            if (err) {
+                logErrorWithCallBack(err, cb);
             } else {
-                enrichCacheObj(rows);
-                addToCache(createKey(req.body.table, rows[pk], conf), rows, conf, function (err, res) {
-                    if (err) {
-                        log.error('ERROR : cache add = ' + err);
-                        cb(err);
-                    }
-                });
+                cb(err, res);
             }
+        });
+    }
+}
+
+function hashEncryptEnrichObject(restObject, resourceConf, results, requestParameterId, qb) {
+    const resourceKey = resourceConf.key.toString();
+    const resId = getResIdToObject(results, resourceConf, resourceKey, requestParameterId);
+    addAttributeToObject(restObject, resourceKey, resId);
+    hashEncryptAttributes(restObject, resourceConf, qb);
+}
+
+function hashEncryptEnrichObjectList(resourcesInReqBody, resourceConf, results, requestParameterId, qb) {
+    for (var i = 0; i < resourcesInReqBody.length; i++) {
+        hashEncryptEnrichObject(resourcesInReqBody[i], resourceConf, results, requestParameterId, qb);
+    }
+}
+
+function encryptHashAndAddToCache(resourceConf, req, results, qb, cb) {
+    const resourcesInReqBody = req.body.attr;
+    const table = req.body.table;
+    const requestParameterId = req.params.id;
+    const isResourceCached = isCached(resourceConf);
+    const isResAnArrayOfResObjects = util.isArray(resourcesInReqBody);
+    try {
+        if (isResourceCached) {
+            if (isResAnArrayOfResObjects) {
+                hashEncryptEnrichObjectList(resourcesInReqBody, resourceConf, results, requestParameterId, qb);
+            } else {
+                hashEncryptEnrichObject(resourcesInReqBody, resourceConf, results, requestParameterId, qb);
+            }
+            addToCacheAgainstKey(table, resourcesInReqBody, resourceConf, cb);
         }
     } catch (e) {
         cb(e);
@@ -223,7 +302,7 @@ post = function (req, res) {
                     return res.status(500).send({error: err.toString()});
                 }
                 /*add to cache*/
-                prepareAndAddToCache(conf, req, results, qb, function (err) {
+                encryptHashAndAddToCache(conf, req, results, qb, function (err) {
                     if (err) {
                         log.error('error setting to cache ' + err);
                     }
@@ -345,15 +424,14 @@ get = function (req, res) {
                                 return res.status(500).send({error: err.toString()});
                             }
                             log.debug('results = ' + results.length + '\t\tfields = ' + fields);
-                            qb.decryptValues(results);
                             /*add to cache*/
-                            addToCache(createKey(table, id, conf), results, conf, function (err, res) {
-                                if (err) {
-                                    log.error('ERROR : cache add = ' + err);
-                                }
+                            var resultsClone = Object.assign(results);
+                            addToCacheAgainstKey(table, results, conf, function (err, data) {
+                                logError(err);
                             });
                             /*added to cache*/
-                            return res.status(200).send(results);
+                            qb.decryptValues(resultsClone);
+                            return res.status(200).send(resultsClone);
                         });
                     } catch (err) {
                         releaseConnection(connection);
@@ -536,7 +614,7 @@ putIfPresent = function (req, res) {
                                 return res.status(500).send({error: err.toString()});
                             }
                             /*add to cache*/
-                            prepareAndAddToCache(conf, req, results, qb, function (err) {
+                            encryptHashAndAddToCache(conf, req, results, qb, function (err) {
                                 if (err) {
                                     log.error('error setting to cache ' + err);
                                 }

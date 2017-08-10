@@ -5,53 +5,46 @@
     "key is the column on which resource will be CRUD. e.g. pk, username",
     "If col name in hashed/encrypted, col value will be hashed/encrypted before saving to db.",
     "If col name in auto col, value will not be taken from payload, but generated at DB e.g. pk",
-    "dates is list of columns with value as date/time. ",
-    "multiValueKey, true means key used to fetch resource from table might return multiple rows e.g. roster, phonebook"
+    "dates is list of columns with value as date/time. "
   ],
   "cached": {
-    "allowed": false,
+    "allowed": true,
     "expiry": 21600000,
     "version": 1,
-    "prefix": "spool"
+    "prefix": "deviceperuser"
   },
   "operation": [
     "GET",
-    "DELETE",
-    "POST"
+    "POST",
+    "PUT"
   ],
   "key": "username",
   "multiValueKey" : true,
-  "encrypted": [
-    "xml"
+  "hashed": [
   ],
   "dates": [
-    "created_at"
+    "created_on"
   ],
   "blob": [
-    {
-      "col": "xml",
-      "type": "string"
-    }
   ],
   "auto": [
-    "seq",
-    "created_at"
+    "created_on"
   ],
   "bulk": {
-    "size": 64
+    "size": 16
   },
   "searchconf": {
     "fields": [
       "username",
-      "xml"
+      "device_id"
     ],
     "where": [
       "username"
     ],
     "orderby": {
-      "deforder": "seq"
+      "deforder": "created_on"
     },
-    "resultlimit": "200"
+    "resultlimit": "32"
   },
   "deleteconf": {
     "where": [

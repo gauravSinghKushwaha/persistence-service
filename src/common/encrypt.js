@@ -42,7 +42,7 @@ Crypt.prototype.decrypt = function (text) {
     dec += decipher.final(UTF8);
     log.debug('text = ' + text + ' decrypt = ' + dec);
     return dec;
-}
+};
 
 Crypt.prototype.encrypt = function (text) {
     const cipher = crypto.createCipher(this.algorithm, this.privateKey);
@@ -50,6 +50,6 @@ Crypt.prototype.encrypt = function (text) {
     crypted += cipher.final(HEX);
     log.debug('text = ' + text + ' crypted = ' + crypted);
     return crypted;
-}
+};
 
 module.exports = new Crypt();
