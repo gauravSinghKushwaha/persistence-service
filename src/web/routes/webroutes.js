@@ -423,9 +423,9 @@ get = function (req, res) {
                                 log.error(err);
                                 return res.status(500).send({error: err.toString()});
                             }
-                            log.debug('results = ' + results.length + '\t\tfields = ' + fields);
+                            log.debug('results = ' + results.length);
                             /*add to cache*/
-                            var resultsClone = Object.assign(results);
+                            const resultsClone = JSON.parse(JSON.stringify(results));
                             addToCacheAgainstKey(table, results, conf, function (err, data) {
                                 logError(err);
                             });

@@ -1,0 +1,79 @@
+{
+  "description": "CONTACT",
+  "type": "object",
+  "properties": {
+    "schema": {
+      "type": "string",
+      "description": "DB schema to be used",
+      "required": true
+    },
+    "table": {
+      "type": "string",
+      "required": true,
+      "description": "DB table to be used"
+    },
+    "attr": {
+      "type": "object",
+      "minProperties": 3,
+      "maxProperties": 5,
+      "required": true,
+      "description": "resource object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9999999,
+          "disallow": [
+            "boolean",
+            "string"
+          ],
+          "description": "primary key"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "disallow": [
+            "boolean",
+            "integer"
+          ],
+          "required": true,
+          "description": "username"
+        },
+        "phonenumber": {
+          "type": "integer",
+          "minLength": 10,
+          "maxLength": 12,
+          "minimum": 100000000,
+          "maximum": 999999999999,
+          "disallow": [
+            "boolean",
+            "string"
+          ],
+          "required": true,
+          "description": "phonenumber of contact"
+        },
+        "created_on": {
+          "type": "string",
+          "format": "date-time",
+          "disallow": [
+            "boolean",
+            "integer"
+          ],
+          "description": "created on date"
+        },
+        "username": {
+          "type": "string",
+          "minLength": 4,
+          "maxLength": 128,
+          "disallow": [
+            "boolean",
+            "integer"
+          ],
+          "required": true,
+          "description": "User id of the user this contacts relates to"
+        }
+      }
+    }
+  }
+}

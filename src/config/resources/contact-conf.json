@@ -1,0 +1,65 @@
+{
+  "decription": [
+    "operation, allowed operation on resource",
+    "cached , it true resource would be cached",
+    "key is the column on which resource will be CRUD. e.g. pk, username",
+    "If col name in hashed/encrypted, col value will be hashed/encrypted before saving to db.",
+    "If col name in auto col, value will not be taken from payload, but generated at DB e.g. pk",
+    "dates is list of columns with value as date/time. "
+  ],
+  "operation": [
+    "GET",
+    "POST",
+    "PUT"
+  ],
+  "cached": {
+    "allowed": false,
+    "expiry": 21600000,
+    "version": 1,
+    "prefix": "contact"
+  },
+  "key": "username",
+  "multiValueKey" : true,    
+  "hashed": [
+  ],
+  "encrypted": [
+    "phonenumber"
+  ],
+  "dates": [
+    "created_on"
+  ],
+  "auto": [
+    "id",
+    "created_on"
+  ],
+  "searchconf": {
+    "fields": [
+      "name",
+      "phonenumber",
+      "created_on"
+    ],
+    "where": [
+      "phonenumber",
+      "username"
+    ],
+    "orderby": {
+      "deforder": "id",
+      "order": [
+        "created_on"
+      ],
+      "by": [
+        "desc"
+      ]
+    },
+    "resultlimit": "1024"
+  },
+  "updateconf": {
+    "fields": [
+      "name"
+    ]
+  },
+  "query": {
+    "timeout": 80000,
+    "result.nesttables": "_"
+  }
+}

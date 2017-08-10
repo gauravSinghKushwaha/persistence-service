@@ -1,0 +1,100 @@
+{
+  "description": "ROSTER",
+  "type": "object",
+  "properties": {
+    "schema": {
+      "type": "string",
+      "description": "DB River schema to be used",
+      "required": true
+    },
+    "table": {
+      "type": "string",
+      "required": true,
+      "description": "DB roster table to be used"
+    },
+    "attr": {
+      "type": "object",
+      "minProperties": 4,
+      "maxProperties": 7,
+      "required": true,
+      "description": "resource object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9999999,
+          "disallow": [
+            "boolean",
+            "string"
+          ],
+          "description": "primary key"
+        },
+        "fromuser": {
+          "type": "string",
+          "minLength": 4,
+          "maxLength": 128,
+          "disallow": [
+            "boolean",
+            "integer"
+          ],
+          "required": true,
+          "description": "username of first user"
+        },
+        "touser": {
+          "type": "string",
+          "minLength": 4,
+          "maxLength": 128,
+          "disallow": [
+            "boolean",
+            "integer"
+          ],
+          "required": true,
+          "description": "username of second user"
+        },
+        "to_display_name": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 128,
+          "disallow": [
+            "boolean",
+            "integer"
+          ],
+          "required": true,
+          "description": "display_name of second user"
+        },
+        "to_handle": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 45,
+          "disallow": [
+            "boolean",
+            "integer"
+          ],
+          "description": "handle of second user"
+        },
+        "is_friend": {
+          "type": "string",
+          "optional": "false",
+          "disallow": [
+            "integer"
+          ],
+          "enum": [
+            "true",
+            "false"
+          ],
+          "required": true,
+          "description": "status of friendship"
+        },
+        "created_on": {
+          "type": "string",
+          "format": "date-time",
+          "disallow": [
+            "boolean",
+            "integer"
+          ],
+          "description": "created on date"
+        }
+      }
+    }
+  }
+}
