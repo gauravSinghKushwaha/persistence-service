@@ -81,6 +81,26 @@
           ],
           "description": "email"
         },
+        "country": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 2,
+          "disallow": [
+            "boolean",
+            "integer"
+          ],
+          "description": "country"
+        },
+        "handle": {
+          "type": "string",
+          "minLength": 6,
+          "maxLength": 32,
+          "disallow": [
+            "boolean",
+            "integer"
+          ],
+          "description": "country"
+        },
         "age": {
           "type": "integer",
           "minLength": 2,

@@ -336,7 +336,7 @@ put = function (req, res) {
                 const conf = jsonValidator.getConf(table);
                 qb = new QueryBuilder(req, schema, conf);
                 q = qb.updateQuery();
-                log.debug(q);
+                log.debug(JSON.stringify(q));
                 connection.query(q.query, q.values, function (err, results, fields) {
                     releaseConnection(connection);
                     if (err) {

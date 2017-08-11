@@ -40,6 +40,7 @@
       "username",
       "display_name",
       "password",
+      "handle",
       "phonenumber",
       "email",
       "age",
@@ -54,6 +55,7 @@
     ],
     "where": [
       "username",
+      "handle",
       "phonenumber",
       "display_name",
       "status",
@@ -77,21 +79,18 @@
     "where": [
       "id",
       "username",
-      "display_name",
-      "phonenumber",
-      "email"
+      "phonenumber"
     ]
   },
   "updateconf": {
     "fields": [
       "display_name",
-      "phonenumber",
-      "email",
-      "password",
-      "age",
-      "status",
-      "domain",
+      "handle",
+      "country",
       "resource",
+      "status",
+      "age",
+      "email",
       "update_on",
       "updated_by"
     ]
