@@ -6,6 +6,7 @@ const jsonValidator = require('./../../common/jsonInputValidation');
 const QueryBuilder = require('./../../db/queryBuilder/queryBuilder');
 const express = require('express');
 const util = require('util');
+const auth = require('basic-auth');
 
 /**
  * Calling querybuilder to build queries and executing here....
@@ -13,7 +14,6 @@ const util = require('util');
  * IF you update , check https://github.com/mysqljs/mysql for better query building and connection usages
  */
 
-const auth = require('basic-auth');
 const router = express.Router();
 const config = conf.config;
 const AT = '@';
