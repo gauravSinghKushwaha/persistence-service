@@ -71,6 +71,42 @@
           ],
           "description": "phonenumber of user"
         },
+        "gender": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1,
+          "disallow": [
+            "boolean",
+            "integer"
+          ],
+          "enum": [
+            "M",
+            "F",
+            "m",
+            "f"
+          ],
+          "description": "gender"
+        },
+        "interest": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 256,
+          "disallow": [
+            "boolean",
+            "integer"
+          ],
+          "description": "interest"
+        },
+        "about": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 256,
+          "disallow": [
+            "boolean",
+            "integer"
+          ],
+          "description": "about"
+        },
         "email": {
           "type": "string",
           "minLength": 10,
