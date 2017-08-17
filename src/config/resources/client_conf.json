@@ -1,5 +1,5 @@
 {
-  "description": "CONTACT",
+  "description": "client_conf",
   "type": "object",
   "properties": {
     "schema": {
@@ -14,53 +14,21 @@
     },
     "attr": {
       "type": "object",
-      "minProperties": 3,
+      "minProperties": 1,
       "maxProperties": 5,
       "required": true,
       "description": "resource object",
       "properties": {
-        "id": {
-          "type": "integer",
-          "minimum": 1,
-          "maximum": 9999999,
-          "disallow": [
-            "boolean",
-            "string"
-          ],
-          "description": "primary key"
-        },
-        "name": {
+        "client": {
           "type": "string",
-          "minLength": 1,
+          "minLength": 4,
           "maxLength": 128,
           "disallow": [
             "boolean",
             "integer"
           ],
-          "required": true,
-          "description": "username"
-        },
-        "phonenumber": {
-          "type": "integer",
-          "minLength": 5,
-          "maxLength": 15,
-          "minimum": 100000000,
-          "maximum": 999999999999,
-          "disallow": [
-            "boolean",
-            "string"
-          ],
-          "required": true,
-          "description": "phonenumber of contact"
-        },
-        "created_on": {
-          "type": "string",
-          "format": "date-time",
-          "disallow": [
-            "boolean",
-            "integer"
-          ],
-          "description": "created on date"
+          "description": "client name",
+          "required": true
         },
         "username": {
           "type": "string",
@@ -70,8 +38,38 @@
             "boolean",
             "integer"
           ],
-          "required": true,
-          "description": "User id of the user this contacts relates to"
+          "description": "username"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 128,
+          "disallow": [
+            "boolean",
+            "integer"
+          ],
+          "description": "config name",
+          "required": true
+        },
+        "value": {
+          "type": "string",
+          "minLength": 7,
+          "maxLength": 256,
+          "disallow": [
+            "boolean",
+            "integer"
+          ],
+          "description": "config value",
+          "required": true
+        },
+        "created_on": {
+          "type": "string",
+          "format": "date-time",
+          "disallow": [
+            "boolean",
+            "integer"
+          ],
+          "description": "created on date"
         }
       }
     }

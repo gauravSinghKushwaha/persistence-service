@@ -60,14 +60,11 @@
           "description": "password"
         },
         "phonenumber": {
-          "type": "integer",
+          "type": "string",
           "minLength": 5,
-          "maxLength": 15,
-          "minimum": 10000,
-          "maximum": 999999999999999,
+          "maxLength": 17,
           "disallow": [
-            "boolean",
-            "string"
+            "boolean"
           ],
           "description": "phonenumber of user"
         },

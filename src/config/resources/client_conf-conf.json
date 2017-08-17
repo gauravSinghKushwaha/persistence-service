@@ -1,0 +1,68 @@
+{
+  "decription": [
+    "operation, allowed operation on resource",
+    "cached , it true resource would be cached",
+    "key is the column on which resource will be CRUD. e.g. pk, username",
+    "If col name in hashed/encrypted, col value will be hashed/encrypted before saving to db.",
+    "If col name in auto col, value will not be taken from payload, but generated at DB e.g. pk",
+    "dates is list of columns with value as date/time. "
+  ],
+  "operation": [
+    "GET",
+    "PUT",
+    "POST",
+    "DELETE"
+  ],
+  "cached": {
+    "allowed": true,
+    "expiry": 21600000,
+    "version": 2,
+    "prefix": "client_conf"
+  },
+  "key": "client",
+  "dates": [
+    "created_on"
+  ],
+  "auto": [
+    "created_on"
+  ],
+  "searchconf": {
+    "fields": [
+      "client",
+      "username",
+      "name",
+      "value",
+      "created_on"
+    ],
+    "where": [
+      "client",
+      "username",
+      "name"
+    ],
+    "orderby": {
+      "deforder": "created_on",
+      "order": [
+        "created_on"
+      ],
+      "by": [
+        "asc",
+        "desc"
+      ]
+    },
+    "resultlimit": "256"
+  },
+  "deleteconf": {
+    "where": [
+      "username"
+    ]
+  },
+  "updateconf": {
+    "fields": [
+      "value"
+    ]
+  },
+  "query": {
+    "timeout": 60000,
+    "result.nesttables": "_"
+  }
+}

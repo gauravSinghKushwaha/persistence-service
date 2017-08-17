@@ -19,6 +19,9 @@ const config = conf.config;
 const AT = '@';
 const COLON = ':';
 const SPACE = ' ';
+const OPERATION_UPDATE = 'update';
+const OPERATION_DELETE = 'delete';
+const OPERATION_SEARCH = 'search';
 
 function releaseConnection(connection) {
     if (connection) connection.release();
@@ -32,10 +35,40 @@ function releaseConnection(connection) {
  * @return {[type]}        [description]
  */
 router.use(function timeLog(req, res, next) {
-    /*API consumer's credentials matching*/
-    res.setHeader('Content-Type', 'application/json');
-    var credentials = auth(req);
-    if (!credentials || credentials.name != config.apiauth.user || credentials.pass != config.apiauth.pwd) {
+    const credentials = auth(req);
+    const body = req.body;
+    const tableName = body.table;
+    try {
+        const table = tableName ? tableName : req.query.table;
+        const conf = jsonValidator.getConf(table);
+        res.setHeader('Content-Type', 'application/json');
+
+        if (isApiClientBasichAuthValid(credentials, config)) {
+            return setBasicAuthFailureResponseToClient();
+        }
+        isHttpVerbAllowedOnResource(conf, req);
+
+        /* validating input body against allowed schema, for POST operation against {{res-name}}.json,
+         for PUT against update.json, for DELETE against delete.json , for POST Search against search.json */
+        jsonValidator.validate(body);
+
+        /* FOR PUT/Update,we need to validate data against {{res-name}}.json as well */
+        const schema = jsonValidator.getSchema(tableName);
+        if (schema && isUpdateOperation(body)) {
+            validateInputObjectAgainstObjectSchema(schema, body.attr);
+        } else if (schema && isSearchOrDeleteOperation(body)) {
+            validateInputObjectAgainstObjectSchema(schema, body.where);
+        }
+    } catch (err) {
+        log.error(err);
+        return res.status(400).send({error: err.toString()});
+    }
+
+    function isApiClientBasichAuthValid(credentials, config) {
+        return !credentials || credentials.name != config.apiauth.user || credentials.pass != config.apiauth.pwd;
+    }
+
+    function setBasicAuthFailureResponseToClient() {
         log.warn('basic auth failed, access denied for api . credentials = ' + credentials);
         res.status(401);
         res.setHeader('WWW-Authenticate', 'Basic realm="Secure Area"');
@@ -43,49 +76,62 @@ router.use(function timeLog(req, res, next) {
     }
 
     /*Validating request payload against json schema*/
-    function validateInputValueAgainstSchema(schema, colValArray) {
-        const keys = Object.keys(colValArray);
-        for (i = 0; i < keys.length; i++) {
-            const k = keys[i].toString();
-            const obj = colValArray[k];
-            const miniSchema = schema.properties.attr.properties[k];
-            // e.g. post search where username in (.._
-            if (util.isArray(obj)) {
-                if (obj.length > 1024) {
-                    throw new Error('In clause can have maximum of 1024.');
-                }
-                for (j = 0; j < obj.length; j++) {
-                    jsonValidator.validateWithSchema(obj[j], miniSchema);
-                }
-            } else {
-                jsonValidator.validateWithSchema(obj, miniSchema);
+    function validateInputObjectAgainstObjectSchema(schema, objectToBeValidatedAgainstSchema) {
+        // things starts from validateObjectAgainstSchema
+        validateObjectAgainstSchema(schema, objectToBeValidatedAgainstSchema);
+
+        function validateListOfSameTypeSubObjectsAgainstSubObjectSchema(obj, miniSchema) {
+            if (obj.length > 1024) {
+                throw new Error('In clause can have maximum of 1024.');
+            }
+            for (j = 0; j < obj.length; j++) {
+                validateSingleSubObjectsAgainstSubObjectSchema(obj[j], miniSchema);
             }
         }
+
+        function validateSingleSubObjectsAgainstSubObjectSchema(obj, miniSchema) {
+            jsonValidator.validateWithSchema(obj, miniSchema);
+        }
+
+        function validateSubObjectAgainstSubObjectSchema(obj, miniSchema) {
+            // e.g. post search where username in (.._
+            if (util.isArray(obj)) {
+                validateListOfSameTypeSubObjectsAgainstSubObjectSchema(obj, miniSchema);
+            } else {
+                validateSingleSubObjectsAgainstSubObjectSchema(obj, miniSchema);
+            }
+        }
+
+        function validateObjectAgainstSchema() {
+            const keys = Object.keys(objectToBeValidatedAgainstSchema);
+            for (i = 0; i < keys.length; i++) {
+                const k = keys[i].toString();
+                const obj = objectToBeValidatedAgainstSchema[k];
+                const miniSchema = schema.properties.attr.properties[k];
+                if (miniSchema) {
+                    validateSubObjectAgainstSubObjectSchema(obj, miniSchema);
+                } else {
+                    throw new Error('Column ' + k + ' is not part of schema/resource conf.');
+                }
+            }
+        }
+
     }
 
-    try {
-        /* validating req.method against allowed HTTP verb on resource*/
-        const table = req.body.table ? req.body.table : req.query.table;
-        const conf = jsonValidator.getConf(table);
+    function isHttpVerbAllowedOnResource(conf, req) {
         if (conf && conf.operation && conf.operation.indexOf(req.method) == -1) {
-            throw new Error('Operation ' + req.method + ' not allowed on resource ' + table);
+            throw new Error('Operation ' + req.method + ' not allowed on resource ');
         }
-
-        /* validating input body against allowed schema, for POST operation against {{res-name}}.json,
-         for PUT against update.json, for DELETE against delete.json , for POST Search against search.json */
-        jsonValidator.validate(req.body);
-
-        /* FOR PUT/Update,we need to validate data against {{res-name}}.json as well */
-        const schema = jsonValidator.getSchema(req.body.table);
-        if (schema && req.body && req.body.operation == 'update') {
-            validateInputValueAgainstSchema(schema, req.body.attr);
-        } else if (schema && req.body && ( req.body.operation == 'delete' || req.body.operation == 'search')) {
-            validateInputValueAgainstSchema(schema, req.body.where);
-        }
-    } catch (err) {
-        log.error(err);
-        return res.status(400).send({error: err.toString()});
     }
+
+    function isUpdateOperation(body) {
+        return body && body.operation == OPERATION_UPDATE;
+    }
+
+    function isSearchOrDeleteOperation(body) {
+        return body && ( body.operation == OPERATION_DELETE || body.operation == OPERATION_SEARCH);
+    }
+
     next();
 });
 

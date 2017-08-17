@@ -205,55 +205,116 @@ query.prototype.searchQuery = function () {
     const limit = jsonData.limit;
     const offset = jsonData.offset;
     const conf = this.conf;
+    const schema = this.dbSchema;
+    const table = this.dbTable;
     const values = [];
 
-    const isOrderingRequired = orderby && conf.searchconf.orderby && orderby.order && conf.searchconf.orderby.order;
-    const validateInput = validateFields('Search', conf.searchconf.fields, fields) && validateFields('Where', conf.searchconf.where, Object.keys(where))
-        && ((isOrderingRequired) ? validateFields('OrderBy', conf.searchconf.orderby.order, orderby.order) : true);
+    const isOrderingRequired = isOrderingByRequired(orderby, conf);
+    const validateInput = validateQueryObjectInputs(conf, fields, where, isOrderingRequired, orderby);
 
     log.debug('Search validation =' + validateInput + '\nfields = ' + JSON.stringify(fields) + '\nwhere= ' + JSON.stringify(where) + '\norderby = '
         + JSON.stringify(orderby) + '\nlimit = ' + JSON.stringify(limit) + '\noffset = ' + offset);
 
-    var queryStr = 'SELECT ' + SPACE + fields.join(',') + SPACE + 'FROM' + SPACE + this.dbSchema + DOT + this.dbTable + SPACE + 'WHERE' + SPACE;
-    const keys = Object.keys(where);
-    for (i = 0; i < keys.length; i++) {
-        const k = keys[i];
-        const wheObj = where[k];
-        queryStr = queryStr + k;
-        if (util.isArray(wheObj)) {
-            queryStr = queryStr + ' IN (';
-            for (j = 0; j < wheObj.length; j++) {
-                queryStr = queryStr + (j < wheObj.length - 1 ? ' ? ,' : ' ? ');
-                values.push(this.getEncryptedValue(conf, k.toString(), wheObj[j], true));
-            }
-            queryStr = queryStr + ' )';
-        } else {
-            queryStr = queryStr + ' = ? ';
-            values.push(this.getEncryptedValue(conf, k.toString(), wheObj, true));
-        }
-        queryStr = queryStr + (i < keys.length - 1 ? ' AND ' : SPACE);
-    }
-
-    if (isOrderingRequired) {
-        queryStr = queryStr + SPACE + 'ORDER BY' + SPACE + orderby.order.join(',') + SPACE + (orderby.by != null && orderby.by != undefined ? orderby.by : 'ASC') + SPACE;
-    } else { // default ordering if any
-        queryStr = queryStr + SPACE + ((conf.searchconf && conf.searchconf.orderby && conf.searchconf.orderby.deforder) ? (' ORDER BY' + SPACE + conf.searchconf.orderby.deforder ) : '');
-    }
-
-    queryStr = queryStr + SPACE + 'LIMIT' + SPACE + (  limit ? limit : 10) + SPACE;
-    if (offset) {
-        queryStr = queryStr + SPACE + 'OFFSET' + SPACE + offset + SPACE;
-    }
+    /**  maintain ordering to following query formation calls else DB query may not form correct*/
+    var queryStr = addSelectFieldsToQuery(fields, schema, table);
+    queryStr = addWhereConditionsToQuery.call(this, where, queryStr, values, conf);
+    queryStr = addOrederingToQuery(isOrderingRequired, queryStr, orderby, conf);
+    queryStr = limitNoOfEntitiesFromQuery(queryStr, limit);
+    queryStr = addOffsetToQuery(offset, queryStr);
 
     return {
         "query": {
             sql: queryStr,
-            nestTables: conf.query && conf.query.nesttables ? conf.query.nesttables : false,
-            timeout: conf.query && conf.query.timeout ? conf.query.timeout : 60000
+            nestTables: isResultSetToBeNestedBasedOnTables(conf),
+            timeout: getQueryTimeoutAtMySql(conf)
         },
         "values": values
     };
 };
+
+function isResultSetToBeNestedBasedOnTables(conf) {
+    return conf.query && conf.query.nesttables ? conf.query.nesttables : false;
+}
+
+function getQueryTimeoutAtMySql(conf) {
+    return conf.query && conf.query.timeout ? conf.query.timeout : 60000;
+}
+
+function isOrderingByRequired(orderby, conf) {
+    return orderby && conf.searchconf.orderby && orderby.order && conf.searchconf.orderby.order;
+}
+
+function validateOrderyClause(isOrderingRequired, conf, orderby) {
+    return ((isOrderingRequired) ? validateFields('OrderBy', conf.searchconf.orderby.order, orderby.order) : true);
+}
+
+function validateQueryObjectInputs(conf, fields, where, isOrderingRequired, orderby) {
+    return validateFields('Search', conf.searchconf.fields, fields) && validateFields('Where', conf.searchconf.where, Object.keys(where))
+        && validateOrderyClause(isOrderingRequired, conf, orderby);
+}
+
+function buildInClauseOfWhereCondition(queryStr, wheObj, values, conf, k) {
+    queryStr = queryStr + ' IN (';
+    for (j = 0; j < wheObj.length; j++) {
+        queryStr = queryStr + (j < wheObj.length - 1 ? ' ? ,' : ' ? ');
+        values.push(this.getEncryptedValue(conf, k.toString(), wheObj[j], true));
+    }
+    queryStr = queryStr + ' )';
+    return queryStr;
+}
+
+function buildEqualClauseOfWhereCondition(queryStr, values, conf, k, valueObj) {
+    values.push(this.getEncryptedValue(conf, k.toString(), valueObj, true));
+    return queryStr + ' = ? ';
+}
+
+function addUserDefinedOrderingToQuery(queryStr, orderby) {
+    return queryStr + SPACE + 'ORDER BY' + SPACE + orderby.order.join(',') + SPACE + (orderby.by != null && orderby.by != undefined ? orderby.by : 'ASC') + SPACE;
+}
+
+function addDefaultOrderingToQuery(queryStr, conf) {
+    return queryStr + SPACE + ((conf.searchconf && conf.searchconf.orderby && conf.searchconf.orderby.deforder) ? (' ORDER BY' + SPACE + conf.searchconf.orderby.deforder ) : '');
+}
+
+function addOrederingToQuery(isOrderingRequired, queryStr, orderby, conf) {
+    if (isOrderingRequired) {
+        queryStr = addUserDefinedOrderingToQuery(queryStr, orderby);
+    } else { // default ordering if any
+        queryStr = addDefaultOrderingToQuery(queryStr, conf);
+    }
+    return queryStr;
+}
+
+function limitNoOfEntitiesFromQuery(queryStr, limit) {
+    return queryStr + SPACE + 'LIMIT' + SPACE + (  limit ? limit : 10) + SPACE;
+}
+
+function addOffsetToQuery(offset, queryStr) {
+    if (offset) {
+        queryStr = queryStr + SPACE + 'OFFSET' + SPACE + offset + SPACE;
+    }
+    return queryStr;
+}
+
+function addWhereConditionsToQuery(where, queryStr, values, conf) {
+    const keys = Object.keys(where);
+    for (var i = 0; i < keys.length; i++) {
+        const k = keys[i];
+        const valueObj = where[k];
+        queryStr = queryStr + k;
+        if (util.isArray(valueObj)) {
+            queryStr = buildInClauseOfWhereCondition.call(this, queryStr, valueObj, values, conf, k);
+        } else {
+            queryStr = buildEqualClauseOfWhereCondition.call(this, queryStr, values, conf, k, valueObj);
+        }
+        queryStr = queryStr + (i < keys.length - 1 ? ' AND ' : SPACE);
+    }
+    return queryStr;
+}
+
+function addSelectFieldsToQuery(fields, dbSchema, dbTable) {
+    return 'SELECT ' + SPACE + fields.join(',') + SPACE + 'FROM' + SPACE + dbSchema + DOT + dbTable + SPACE + 'WHERE' + SPACE;
+}
 
 /**
  * Find resource by ID
