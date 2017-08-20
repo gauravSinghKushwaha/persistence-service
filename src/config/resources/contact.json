@@ -41,14 +41,11 @@
           "description": "username"
         },
         "phonenumber": {
-          "type": "integer",
+          "type": "string",
           "minLength": 5,
-          "maxLength": 15,
-          "minimum": 100000000,
-          "maximum": 999999999999,
+          "maxLength": 17,
           "disallow": [
-            "boolean",
-            "string"
+            "boolean"
           ],
           "required": true,
           "description": "phonenumber of contact"

@@ -32,6 +32,9 @@
     "id",
     "created_on"
   ],
+  "bulk": {
+    "size": 2048
+  },
   "searchconf": {
     "fields": [
       "name",

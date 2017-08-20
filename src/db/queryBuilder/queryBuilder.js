@@ -165,6 +165,13 @@ query.prototype.insertQuery = function () {
     };
 };
 
+function validateUpdatedFieldsAndWhereClause(conf, actualFields, where) {
+    validateFields('Update', isValidObject(conf.updateconf) ? conf.updateconf.fields : [], actualFields);
+    if (where) {
+        validateFields('Where', conf.searchconf.where, Object.keys(where));
+    }
+}
+
 /**
  * Creates insert query
  * @returns {{where: string, values: Array}}
@@ -173,23 +180,38 @@ query.prototype.updateQuery = function () {
     const conf = this.conf;
     const jsonData = this.req.body;
     const fields = jsonData.attr;
-    var queryStr = 'UPDATE ' + this.dbSchema + DOT + this.dbTable + SPACE + 'SET' + SPACE;
+    const where = jsonData.where;
     const actualFields = Object.keys(fields);
-    validateFields('Update', isValidObject(conf.updateconf) ? conf.updateconf.fields : [], actualFields);
+
+    validateUpdatedFieldsAndWhereClause(conf, actualFields, where);
     const q = this.createConditionsAndValues();
     log.debug('condition values from input ' + q);
+
+    var queryStr = 'UPDATE ' + this.dbSchema + DOT + this.dbTable + SPACE + 'SET' + SPACE;
     queryStr += q.conditions.join('= ? , ');
     queryStr += SPACE + ' = ? WHERE' + SPACE + conf.key + ' = ?';
+
     // for update we should have only one row in array
-    q.values = (util.isArray(q.values) && q.values.length == 1) ? q.values[0] : q.values;
-    q.values.push(this.req.params.id);
+    const values = (util.isArray(q.values) && q.values.length == 1) ? q.values[0] : q.values;
+    values.push(this.req.params.id);
+
+    console.log(JSON.stringify(queryStr));
+
+    if (where) {
+        console.log(JSON.stringify(queryStr));
+        queryStr += SPACE + "AND" + SPACE;
+        // adding where condition
+        queryStr = addWhereConditionsToQuery.call(this, where, queryStr, values, conf);
+    }
+    console.log(JSON.stringify(queryStr));
+    console.log(JSON.stringify(values));
     return {
         "query": {
             sql: queryStr,
-            nestTables: conf.query && conf.query.nesttables ? conf.query.nesttables : false,
-            timeout: conf.query && conf.query.timeout ? conf.query.timeout : 60000
+            nestTables: isResultSetToBeNestedBasedOnTables(conf),
+            timeout: getQueryTimeoutAtMySql(conf)
         },
-        "values": (util.isArray(q.values) && q.values.length == 1) ? q.values[0] : q.values
+        "values": values
     };
 };
 
@@ -201,7 +223,7 @@ query.prototype.searchQuery = function () {
     const jsonData = this.req.body;
     const fields = jsonData.fields;
     const where = jsonData.where;
-    const orderby = jsonData.orderby;
+    const orderBy = jsonData.orderby;
     const limit = jsonData.limit;
     const offset = jsonData.offset;
     const conf = this.conf;
@@ -209,16 +231,16 @@ query.prototype.searchQuery = function () {
     const table = this.dbTable;
     const values = [];
 
-    const isOrderingRequired = isOrderingByRequired(orderby, conf);
-    const validateInput = validateQueryObjectInputs(conf, fields, where, isOrderingRequired, orderby);
+    const isOrderingRequired = isOrderingByRequired(orderBy, conf);
+    const validateInput = validateQueryObjectInputs(conf, fields, where, isOrderingRequired, orderBy);
 
-    log.debug('Search validation =' + validateInput + '\nfields = ' + JSON.stringify(fields) + '\nwhere= ' + JSON.stringify(where) + '\norderby = '
-        + JSON.stringify(orderby) + '\nlimit = ' + JSON.stringify(limit) + '\noffset = ' + offset);
+    log.debug('Search validation =' + validateInput + '\nfields = ' + JSON.stringify(fields) + '\nwhere= ' + JSON.stringify(where) + '\norderBy = '
+        + JSON.stringify(orderBy) + '\nlimit = ' + JSON.stringify(limit) + '\noffset = ' + offset);
 
     /**  maintain ordering to following query formation calls else DB query may not form correct*/
     var queryStr = addSelectFieldsToQuery(fields, schema, table);
     queryStr = addWhereConditionsToQuery.call(this, where, queryStr, values, conf);
-    queryStr = addOrederingToQuery(isOrderingRequired, queryStr, orderby, conf);
+    queryStr = addOrederingToQuery(isOrderingRequired, queryStr, orderBy, conf);
     queryStr = limitNoOfEntitiesFromQuery(queryStr, limit);
     queryStr = addOffsetToQuery(offset, queryStr);
 

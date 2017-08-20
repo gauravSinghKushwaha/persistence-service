@@ -1,5 +1,6 @@
 const conf = require('./../config/config');
-const config = conf.config;const log = require('./../log/logger');
+const config = conf.config;
+const log = require('./../log/logger');
 const morgan = require('./../log/accessLogger');
 const router = require('./routes/webroutes')
 const helmet = require('helmet');
@@ -12,16 +13,19 @@ app.use(helmet());
 app.use(compression());
 app.use(morgan);
 app.use(bodyParser.urlencoded({
-  extended: true
+    extended: true,
+    limit: '10mb'
 }));
-app.use(bodyParser.json());
+app.use(bodyParser.json({
+    limit: '10mb'
+}));
 
 app.use('/river/' + config.web.version, router);
 
-const server = app.listen(config.web.port, function() {
-  var host = server.address().address;
-  var port = server.address().port;
-  log.info('server listening at http://' + host + ':' + port);
+const server = app.listen(config.web.port, function () {
+    var host = server.address().address;
+    var port = server.address().port;
+    log.info('server listening at http://' + host + ':' + port);
 });
 
 module.exports = server;

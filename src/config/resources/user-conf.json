@@ -99,6 +99,11 @@
       "email",
       "update_on",
       "updated_by"
+    ],
+    "where": [
+      "username",
+      "handle",
+      "phonenumber"
     ]
   },
   "query": {
