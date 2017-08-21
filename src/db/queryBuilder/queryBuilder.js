@@ -263,7 +263,7 @@ function getQueryTimeoutAtMySql(conf) {
 }
 
 function isOrderingByRequired(orderby, conf) {
-    return orderby && conf.searchconf.orderby && orderby.order && conf.searchconf.orderby.order;
+    return isValidObject(orderby) && conf.searchconf.orderby && orderby.order && conf.searchconf.orderby.order;
 }
 
 function validateOrderyClause(isOrderingRequired, conf, orderby) {

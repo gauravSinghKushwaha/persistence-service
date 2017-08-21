@@ -42,7 +42,6 @@ router.use(function timeLog(req, res, next) {
         const table = tableName ? tableName : req.query.table;
         const conf = jsonValidator.getConf(table);
         res.setHeader('Content-Type', 'application/json');
-
         if (isApiClientBasichAuthValid(credentials, config)) {
             return setBasicAuthFailureResponseToClient();
         }
@@ -421,7 +420,7 @@ postSearch = function (req, res) {
         try {
             qb = new QueryBuilder(req, jsonValidator.getSchema(req.body.operation), jsonValidator.getConf(req.body.table));
             q = qb.searchQuery();
-            log.debug(q);
+            log.debug(JSON.stringify(q));
             connection.query(q.query, q.values, function (err, results, fields) {
                 releaseConnection(connection);
                 if (err) {
