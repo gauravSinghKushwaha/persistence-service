@@ -19,7 +19,7 @@
     "prefix": "roster"
   },
   "key": "fromuser",
-  "multiValueKey" : true,  
+  "multiValueKey": true,
   "hashed": [
   ],
   "encrypted": [
@@ -32,7 +32,7 @@
     "created_on"
   ],
   "bulk": {
-    "size": 32
+    "size": 1024
   },
   "searchconf": {
     "fields": [
@@ -45,7 +45,6 @@
     ],
     "where": [
       "fromuser",
-      "touser",
       "is_friend"
     ],
     "orderby": {
@@ -57,7 +56,7 @@
         "desc"
       ]
     },
-    "resultlimit": "1024"
+    "resultlimit": 2048
   },
   "updateconf": {
     "fields": [

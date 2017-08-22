@@ -241,7 +241,7 @@ query.prototype.searchQuery = function () {
     var queryStr = addSelectFieldsToQuery(fields, schema, table);
     queryStr = addWhereConditionsToQuery.call(this, where, queryStr, values, conf);
     queryStr = addOrederingToQuery(isOrderingRequired, queryStr, orderBy, conf);
-    queryStr = limitNoOfEntitiesFromQuery(queryStr, limit);
+    queryStr = limitNoOfEntitiesFromQuery(queryStr, limit, conf.searchconf.resultlimit);
     queryStr = addOffsetToQuery(offset, queryStr);
 
     return {
@@ -307,8 +307,8 @@ function addOrederingToQuery(isOrderingRequired, queryStr, orderby, conf) {
     return queryStr;
 }
 
-function limitNoOfEntitiesFromQuery(queryStr, limit) {
-    return queryStr + SPACE + 'LIMIT' + SPACE + (  limit ? limit : 10) + SPACE;
+function limitNoOfEntitiesFromQuery(queryStr, limit, defLimit) {
+    return queryStr + SPACE + 'LIMIT' + SPACE + (  limit ? limit : (defLimit ? defLimit : 10)) + SPACE;
 }
 
 function addOffsetToQuery(offset, queryStr) {

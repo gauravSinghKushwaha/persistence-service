@@ -51,7 +51,7 @@
     "orderby": {
       "deforder": "seq"
     },
-    "resultlimit": "200"
+    "resultlimit": 512
   },
   "deleteconf": {
     "where": [

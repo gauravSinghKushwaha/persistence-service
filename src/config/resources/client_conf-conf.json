@@ -49,7 +49,7 @@
         "desc"
       ]
     },
-    "resultlimit": "256"
+    "resultlimit": 256
   },
   "deleteconf": {
     "where": [

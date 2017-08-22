@@ -54,7 +54,7 @@
         "desc"
       ]
     },
-    "resultlimit": "1024"
+    "resultlimit": 1024
   },
   "updateconf": {
     "fields": [
