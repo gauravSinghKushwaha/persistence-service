@@ -23,6 +23,7 @@
   "hashed": [
   ],
   "encrypted": [
+    "to_phonenumber"
   ],
   "dates": [
     "created_on"
@@ -39,6 +40,7 @@
       "fromuser",
       "touser",
       "to_display_name",
+      "to_phonenumber",
       "to_handle",
       "is_friend",
       "created_on"

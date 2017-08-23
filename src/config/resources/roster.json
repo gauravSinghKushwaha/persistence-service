@@ -62,6 +62,15 @@
           "required": true,
           "description": "display_name of second user"
         },
+        "to_phonenumber": {
+          "type": "string",
+          "minLength": 5,
+          "maxLength": 17,
+          "disallow": [
+            "boolean"
+          ],
+          "description": "phonenumber of user"
+        },
         "to_handle": {
           "type": "string",
           "minLength": 3,
