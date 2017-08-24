@@ -339,7 +339,7 @@ post = function (req, res) {
             const conf = jsonValidator.getConf(req.body.table);
             const qb = new QueryBuilder(req, jsonValidator.getSchema(req.body.table), conf);
             q = qb.insertQuery();
-            console.log(JSON.stringify(q));
+            log.debug(JSON.stringify(q));
             connection.query(q.query, q.values, function (err, results, fields) {
                 releaseConnection(connection);
                 if (err) {
@@ -421,7 +421,6 @@ postSearch = function (req, res) {
             qb = new QueryBuilder(req, jsonValidator.getSchema(req.body.operation), jsonValidator.getConf(req.body.table));
             q = qb.searchQuery();
             log.debug(JSON.stringify(q));
-            console.log(JSON.stringify(q));
             connection.query(q.query, q.values, function (err, results, fields) {
                 releaseConnection(connection);
                 if (err) {

@@ -195,16 +195,12 @@ query.prototype.updateQuery = function () {
     const values = (util.isArray(q.values) && q.values.length == 1) ? q.values[0] : q.values;
     values.push(this.req.params.id);
 
-    console.log(JSON.stringify(queryStr));
-
     if (where) {
-        console.log(JSON.stringify(queryStr));
         queryStr += SPACE + "AND" + SPACE;
         // adding where condition
         queryStr = addWhereConditionsToQuery.call(this, where, queryStr, values, conf);
     }
-    console.log(JSON.stringify(queryStr));
-    console.log(JSON.stringify(values));
+
     return {
         "query": {
             sql: queryStr,

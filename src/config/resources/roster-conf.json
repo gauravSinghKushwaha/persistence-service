@@ -47,6 +47,7 @@
     ],
     "where": [
       "fromuser",
+      "touser",
       "is_friend"
     ],
     "orderby": {
