@@ -291,7 +291,8 @@ function addUserDefinedOrderingToQuery(queryStr, orderby) {
 }
 
 function addDefaultOrderingToQuery(queryStr, conf) {
-    return queryStr + SPACE + ((conf.searchconf && conf.searchconf.orderby && conf.searchconf.orderby.deforder) ? (' ORDER BY' + SPACE + conf.searchconf.orderby.deforder ) : '');
+    const isDefaultOrderingAvailable = (conf.searchconf && conf.searchconf.orderby && conf.searchconf.orderby.deforder);
+    return queryStr + SPACE + (isDefaultOrderingAvailable ? (' ORDER BY' + SPACE + conf.searchconf.orderby.deforder ) : '');
 }
 
 function addOrederingToQuery(isOrderingRequired, queryStr, orderby, conf) {
@@ -342,15 +343,17 @@ function addSelectFieldsToQuery(fields, dbSchema, dbTable) {
  */
 query.prototype.findById = function (table, schema, id) {
     const conf = this.conf;
-    const q = {
+    var queryStr = 'SELECT ' + SPACE + conf.searchconf.fields.join(',') + SPACE + 'FROM' + SPACE + schema + '.' + table + SPACE + 'WHERE ' + conf.key + ' = ? ' ;
+    queryStr = addDefaultOrderingToQuery(queryStr, conf);
+    queryStr = limitNoOfEntitiesFromQuery(queryStr, undefined, conf.searchconf.resultlimit);
+    return {
         "query": {
-            sql: 'SELECT ' + SPACE + conf.searchconf.fields.join(',') + SPACE + 'FROM' + SPACE + schema + '.' + table + SPACE + 'WHERE ' + conf.key + ' = ? ' + ((conf.searchconf && conf.searchconf.orderby && conf.searchconf.orderby.deforder) ? (' ORDER BY' + SPACE + conf.searchconf.orderby.deforder ) : ''),
-            nestTables: conf.query && conf.query.nesttables ? conf.query.nesttables : false,
-            timeout: conf.query && conf.query.timeout ? conf.query.timeout : 60000
+            sql: queryStr,
+            nestTables: isResultSetToBeNestedBasedOnTables(conf),
+            timeout: getQueryTimeoutAtMySql(conf)
         },
         "values": [id]
     };
-    return q;
 };
 
 /**

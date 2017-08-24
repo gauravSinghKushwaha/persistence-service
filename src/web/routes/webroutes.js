@@ -461,7 +461,7 @@ get = function (req, res) {
                     }
                     try {
                         const q = qb.findById(table, schema, id);
-                        log.debug('query obj = ' + q);
+                        log.debug('query obj = ' + JSON.stringify(q));
                         connection.query(q.query, q.values, function (err, results, fields) {
                             releaseConnection(connection);
                             if (err) {
