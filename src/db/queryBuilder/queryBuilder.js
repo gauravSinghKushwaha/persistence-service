@@ -343,7 +343,7 @@ function addSelectFieldsToQuery(fields, dbSchema, dbTable) {
  */
 query.prototype.findById = function (table, schema, id) {
     const conf = this.conf;
-    var queryStr = 'SELECT ' + SPACE + conf.searchconf.fields.join(',') + SPACE + 'FROM' + SPACE + schema + '.' + table + SPACE + 'WHERE ' + conf.key + ' = ? ' ;
+    var queryStr = 'SELECT ' + SPACE + conf.searchconf.fields.join(',') + SPACE + 'FROM' + SPACE + schema + '.' + table + SPACE + 'WHERE ' + conf.key + ' = ? ';
     queryStr = addDefaultOrderingToQuery(queryStr, conf);
     queryStr = limitNoOfEntitiesFromQuery(queryStr, undefined, conf.searchconf.resultlimit);
     return {
@@ -366,8 +366,8 @@ query.prototype.deleteById = function (table, schema, id) {
     return {
         "query": {
             sql: 'DELETE FROM ' + schema + '.' + table + SPACE + 'WHERE ' + this.conf.key + ' = ? ',
-            nestTables: conf.query && conf.query.nesttables ? conf.query.nesttables : false,
-            timeout: conf.query && conf.query.timeout ? conf.query.timeout : 60000
+            nestTables: isResultSetToBeNestedBasedOnTables(conf),
+            timeout: getQueryTimeoutAtMySql(conf)
         },
         "values": [id]
     };
@@ -387,8 +387,8 @@ query.prototype.getanddelete = function (table, schema, id) {
     return {
         "query": {
             sql: getQuery.query.sql + SEMICOLON + deleteQuery.query.sql,
-            nestTables: conf.query && conf.query.nesttables ? conf.query.nesttables : false,
-            timeout: conf.query && conf.query.timeout ? conf.query.timeout : 60000
+            nestTables: isResultSetToBeNestedBasedOnTables(conf),
+            timeout: getQueryTimeoutAtMySql(conf)
         },
         "values": [getQuery.values, deleteQuery.values]
     };
@@ -421,8 +421,8 @@ query.prototype.deleteQuery = function () {
     return {
         "query": {
             sql: selectIds + SEMICOLON + deleteQuery,
-            nestTables: conf.query && conf.query.nesttables ? conf.query.nesttables : false,
-            timeout: conf.query && conf.query.timeout ? conf.query.timeout : 60000
+            nestTables: isResultSetToBeNestedBasedOnTables(conf),
+            timeout: getQueryTimeoutAtMySql(conf)
         },
         "values": [values, values]
     };
@@ -439,8 +439,8 @@ query.prototype.putifpresent = function () {
     return {
         "query": {
             sql: q.query,
-            nestTables: conf.query && conf.query.nesttables ? conf.query.nesttables : false,
-            timeout: conf.query && conf.query.timeout ? conf.query.timeout : 60000
+            nestTables: isResultSetToBeNestedBasedOnTables(conf),
+            timeout: getQueryTimeoutAtMySql(conf)
         },
         "values": q.values
     };
