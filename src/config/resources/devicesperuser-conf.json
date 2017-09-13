@@ -16,7 +16,8 @@
   "operation": [
     "GET",
     "POST",
-    "PUT"
+    "PUT",
+    "DELETE"
   ],
   "key": "username",
   "multiValueKey" : true,
@@ -31,7 +32,7 @@
     "created_on"
   ],
   "bulk": {
-    "size": 16
+    "size": 64
   },
   "searchconf": {
     "fields": [
@@ -39,7 +40,8 @@
       "device_id"
     ],
     "where": [
-      "username"
+      "username",
+      "device_id"
     ],
     "orderby": {
       "deforder": "created_on"
@@ -48,7 +50,8 @@
   },
   "deleteconf": {
     "where": [
-      "username"
+      "username",
+      "device_id"
     ]
   }
 }

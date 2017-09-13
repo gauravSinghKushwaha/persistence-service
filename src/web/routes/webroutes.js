@@ -545,7 +545,8 @@ postDel = function (req, res) {
             const table = req.body.table;
             const conf = jsonValidator.getConf(table);
             qb = new QueryBuilder(req, jsonValidator.getSchema(req.body.operation), conf);
-            q = qb.deleteQuery();
+            q = qb.deleteQue.
+            ry();
             log.debug(q);
             connection.query(q.query, q.values, function (err, results, fields) {
                 releaseConnection(connection);

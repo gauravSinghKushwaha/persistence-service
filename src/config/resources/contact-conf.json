@@ -37,6 +37,7 @@
   },
   "searchconf": {
     "fields": [
+	  "username",	
       "name",
       "phonenumber",
       "created_on"
